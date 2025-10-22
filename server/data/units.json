@@ -6,13 +6,6 @@
     "level": "province"
   },
   {
-    "id": 2,
-    "name": "Ba Đình",
-    "code": "0101",
-    "level": "district",
-    "parentCode": "01"
-  },
-  {
     "id": 3,
     "name": "Phúc Xá",
     "code": "010101",
@@ -40,6 +33,18 @@
     "boundary": null,
     "createdAt": "2025-10-22T03:47:13.897Z",
     "updatedAt": "2025-10-22T03:47:13.897Z",
+    "history": [],
+    "children": []
+  },
+  {
+    "id": 1761113093533,
+    "name": "Hà Nam",
+    "code": "03",
+    "level": "province",
+    "parentCode": null,
+    "boundary": null,
+    "createdAt": "2025-10-22T06:04:53.533Z",
+    "updatedAt": "2025-10-22T06:04:53.533Z",
     "history": [],
     "children": []
   }

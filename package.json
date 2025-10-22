@@ -4,13 +4,14 @@
   "main": "server.js",
   "type": "module",
   "directories": {
-  "test": "jest"
+    "test": "jest"
   },
   "scripts": {
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "start": "node server.js",
     "fetch": "node fetcher/index.js",
-    "schedule": "node fetcher/schedule.js"
+    "schedule": "node fetcher/schedule.js",
+    "import": "node server/scripts/importUnits.js"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,8 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.19.2",
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2"
   }
