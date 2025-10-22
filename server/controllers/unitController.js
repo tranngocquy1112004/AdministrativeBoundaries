@@ -138,3 +138,28 @@ export async function restoreFromHistory(req, res) {
     res.status(500).json({ error: "Internal Server Error" });
   }
 }
+export async function diffHistory(req, res) {
+  try {
+    const { id } = req.params;
+    const { old, new: newer } = req.query;
+
+    const unit = await Unit.findById(id);
+    if (!unit) return res.status(404).json({ error: "Unit not found" });
+
+    const a = unit.history?.[old];
+    const b = unit.history?.[newer] || unit;
+    if (!a || !b) return res.status(400).json({ error: "Invalid history index" });
+
+    const diff = {};
+    for (const key of Object.keys(b.toObject ? b.toObject() : b)) {
+      if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) {
+        diff[key] = { old: a[key], new: b[key] };
+      }
+    }
+
+    res.json(diff);
+  } catch (err) {
+    console.error("❌ Error comparing history:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}

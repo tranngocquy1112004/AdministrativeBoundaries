@@ -6,6 +6,8 @@ import provinceRoutes from "./server/routes/provinces.js";
 import communeRoutes from "./server/routes/communes.js";
 import convertRoutes from "./server/routes/convert.js";
 import unitsRoutes from "./server/routes/units.js";
+import searchRoutes from "./server/routes/search.js";
+import treeRoutes from "./server/routes/tree.js";
 // Load biến môi trường
 dotenv.config();
 // Kết nối MongoDB
@@ -34,7 +36,8 @@ app.use("/units", unitsRoutes);
 app.use("/provinces", provinceRoutes);
 app.use("/communes", communeRoutes);
 app.use("/convert", convertRoutes);
-
+app.use("/search", searchRoutes);
+app.use("/tree", treeRoutes);
 // --- XỬ LÝ LỖI CHUNG ---
 app.use((req, res, next) => {
   res.status(404).json({
