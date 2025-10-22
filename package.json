@@ -8,12 +8,12 @@
   },
   "scripts": {
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage",
     "start": "node server.js",
     "fetch": "node fetcher/index.js",
     "schedule": "node fetcher/schedule.js",
     "import": "node server/scripts/importUnits.js",
     "import-address": "node server/scripts/importAddress.js"
-
   },
   "keywords": [],
   "author": "",
@@ -21,7 +21,8 @@
   "description": "",
   "devDependencies": {
     "cross-env": "^10.1.0",
-    "jest": "^30.2.0"
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
