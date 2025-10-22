@@ -1,0 +1,15 @@
+bắt đầu tạo các file, cài package cross-env, node, jest, node-cron, cấu hình package.json,ES Module,
+sử dụng API của tinhthanhpho.com, cài đặt dotenv để đọc .env
+- coverage dùng để báo cáo xem có bao nhiêu % code của mình đã được test thực sự chạy qua.
+Nếu muốn kiểm tra độ bao phủ, dùng:
+"npm run test:coverage"
+tất cả những phần cần chạy: 
+npm run start → chạy server Express
+npm run fetch → gọi API tinhthanhpho.com
+npm run schedule → chạy cron job tự động
+npm test → chạy toàn bộ Jest testKh
+API lấy từ: https://addresskit.cas.so/ (Nên lưu vào database để lỡ trang lấy API bị sập thì vẫn sẽ còn)
+21/10/2025 - 4:14: Đã build cơ bản xong REST API truy cập dữ liệu-> communes, health, provinces và convert,
+bắt đầu tìm hiểu về cron jon(auto update)
+
+Tổng quan luồng project : (1) Fetcher → (2) Data → (3) Server → (4) Tests → (5) Cron Job
