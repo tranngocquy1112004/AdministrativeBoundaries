@@ -11,7 +11,6 @@ app.use("/provinces", provinceRoutes);
 app.use("/communes", communeRoutes);
 app.use("/convert", convertRoutes);
 app.use("/units", unitsRoutes);
-console.log("✅ Routes loaded: /units");
 app.get("/", (req, res) => {
   res.json({
     message: "Cas AddressKit API Proxy ✅",

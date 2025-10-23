@@ -1,0 +1,222 @@
+Tổng hợp các trường hợp kiểm thử (Integration Tests)
+
+File: tests/integration/fullFlow.test.js
+
+1) Luồng CRUD hoàn chỉnh (Complete CRUD Flow)
+- Trường hợp: Tạo unit mới với đầy đủ thông tin
+  Cách test: POST /units với name, code, level, parentCode, englishName, administrativeLevel, decree
+  Kỳ vọng: Status 201, response chứa data với name, code, level đúng
+- Trường hợp: Lấy thông tin unit đã tạo
+  Cách test: GET /units/{code}
+  Kỳ vọng: Status 200, body.name khớp với dữ liệu tạo
+- Trường hợp: Cập nhật unit
+  Cách test: PUT /units/{code} với name và englishName mới
+  Kỳ vọng: Status 200, response.data.name là tên mới
+- Trường hợp: Lấy thông tin unit sau khi cập nhật
+  Cách test: GET /units/{code}
+  Kỳ vọng: Status 200, body.name là tên đã cập nhật
+- Trường hợp: Xóa unit
+  Cách test: DELETE /units/{code}
+  Kỳ vọng: Status 200, message chứa từ "xóa"
+- Trường hợp: Xác minh unit đã bị xóa
+  Cách test: GET /units/{code}
+  Kỳ vọng: Status 404
+
+2) Luồng khôi phục hoàn chỉnh (Complete Restore Flow)
+- Trường hợp: Tạo unit
+  Cách test: POST /units với name, code, level, parentCode
+  Kỳ vọng: Status 201
+- Trường hợp: Cập nhật unit
+  Cách test: PUT /units/{code} với name mới
+  Kỳ vọng: Status 200
+- Trường hợp: Xóa unit
+  Cách test: DELETE /units/{code}
+  Kỳ vọng: Status 200
+- Trường hợp: Lấy lịch sử unit
+  Cách test: GET /units/{code}/history
+  Kỳ vọng: Status 200, body có 3 phần tử (create, update, delete)
+- Trường hợp: Khôi phục unit
+  Cách test: POST /units/{code}/restore
+  Kỳ vọng: Status 200, message chứa từ "khôi phục"
+- Trường hợp: Xác minh unit đã được khôi phục
+  Cách test: GET /units/{code}
+  Kỳ vọng: Status 200, body.name là tên đã cập nhật
+
+3) Luồng tìm kiếm hoàn chỉnh (Complete Search Flow)
+- Trường hợp: Tạo nhiều unit (2 tỉnh, 1 xã)
+  Cách test: POST /units cho từng unit với level khác nhau
+  Kỳ vọng: Tất cả status 201
+- Trường hợp: Tìm kiếm theo level province
+  Cách test: GET /search?level=province
+  Kỳ vọng: Status 200, body có 2 phần tử
+- Trường hợp: Tìm kiếm theo level commune
+  Cách test: GET /search?level=commune
+  Kỳ vọng: Status 200, body có 1 phần tử
+- Trường hợp: Tìm kiếm theo tên
+  Cách test: GET /search?name=Test
+  Kỳ vọng: Status 200, body có 3 phần tử
+
+4) Luồng cây phân cấp hoàn chỉnh (Complete Tree Flow)
+- Trường hợp: Tạo unit phân cấp (1 tỉnh, 2 xã)
+  Cách test: POST /units cho từng unit với parentCode
+  Kỳ vọng: Tất cả status 201
+- Trường hợp: Lấy cấu trúc cây
+  Cách test: GET /tree
+  Kỳ vọng: Status 200, body có 1 phần tử, children có 2 phần tử
+
+5) Luồng chuyển đổi hoàn chỉnh (Complete Convert Flow)
+- Trường hợp: Tạo unit để chuyển đổi (1 tỉnh, 1 xã)
+  Cách test: POST /units cho từng unit
+  Kỳ vọng: Tất cả status 201
+- Trường hợp: Chuyển đổi địa chỉ
+  Cách test: POST /convert với address "Tỉnh Test, Phường Test"
+  Kỳ vọng: Status 200, found=true, matched.province và matched.commune đúng
+
+6) Kiểm thử tính nhất quán dữ liệu (Data Consistency Tests)
+- Trường hợp: Tạo unit và xác minh trong database
+  Cách test: POST /units, sau đó Unit.findOne({code})
+  Kỳ vọng: Unit tồn tại, name đúng
+- Trường hợp: Cập nhật unit và xác minh trong database
+  Cách test: PUT /units/{code}, sau đó Unit.findOne({code})
+  Kỳ vọng: Unit.name là tên mới
+- Trường hợp: Xóa unit và xác minh trong database
+  Cách test: DELETE /units/{code}, sau đó Unit.findOne({code})
+  Kỳ vọng: Unit là null
+- Trường hợp: Xác minh lịch sử được duy trì
+  Cách test: UnitHistory.find({code})
+  Kỳ vọng: Có 3 bản ghi (create, update, delete)
+
+7) Kiểm thử tính nhất quán lịch sử (History Consistency)
+- Trường hợp: Tạo unit
+  Cách test: POST /units
+  Kỳ vọng: Status 201
+- Trường hợp: Cập nhật unit nhiều lần
+  Cách test: PUT /units/{code} với 3 lần cập nhật khác nhau
+  Kỳ vọng: Tất cả status 200
+- Trường hợp: Xác minh lịch sử
+  Cách test: UnitHistory.find({code}).sort({changedAt: -1})
+  Kỳ vọng: Có 4 bản ghi (create + 3 updates)
+- Trường hợp: Xác minh thứ tự lịch sử
+  Cách test: Kiểm tra action và newData.name của từng bản ghi
+  Kỳ vọng: Thứ tự đúng, action và name đúng
+
+8) Kiểm thử phục hồi lỗi (Error Recovery Tests)
+- Trường hợp: Tạo unit với dữ liệu không hợp lệ
+  Cách test: POST /units với name="", code="", level="invalid"
+  Kỳ vọng: Status 400
+- Trường hợp: Lấy unit không tồn tại
+  Cách test: GET /units/99999
+  Kỳ vọng: Status 404
+- Trường hợp: Cập nhật unit không tồn tại
+  Cách test: PUT /units/99999 với name="Updated"
+  Kỳ vọng: Status 404
+- Trường hợp: Xóa unit không tồn tại
+  Cách test: DELETE /units/99999
+  Kỳ vọng: Status 404
+
+9) Kiểm thử thao tác đồng thời (Concurrent Operations)
+- Trường hợp: Tạo nhiều unit đồng thời
+  Cách test: Promise.all với 10 unit khác nhau
+  Kỳ vọng: Tất cả status 201
+- Trường hợp: Cập nhật nhiều unit đồng thời
+  Cách test: Promise.all với PUT cho từng unit
+  Kỳ vọng: Tất cả status 200
+- Trường hợp: Lấy thông tin nhiều unit đồng thời
+  Cách test: Promise.all với GET cho từng unit
+  Kỳ vọng: Tất cả status 200, name chứa "Updated"
+
+10) Kiểm thử hiệu năng (Performance Tests)
+- Trường hợp: Xử lý dataset lớn (100 unit)
+  Cách test: Tạo 100 unit, đo thời gian create/get/search/tree
+  Kỳ vọng: Create < 5s, Get < 1s, Search < 1s, Tree < 1s
+- Trường hợp: Thao tác đồng thời hiệu quả (50 unit)
+  Cách test: Promise.all cho create/update/get
+  Kỳ vọng: Create < 3s, Update < 2s, Get < 1s
+
+11) Kiểm thử tính toàn vẹn dữ liệu (Data Integrity Tests)
+- Trường hợp: Duy trì tính toàn vẹn tham chiếu
+  Cách test: Tạo parent unit, tạo child unit, xóa parent
+  Kỳ vọng: Parent bị xóa, child vẫn tồn tại
+- Trường hợp: Duy trì tính nhất quán dữ liệu qua các thao tác
+  Cách test: Tạo → cập nhật → xác minh trong DB/API/search
+  Kỳ vọng: Dữ liệu nhất quán ở tất cả nơi
+
+----------------------------------------
+
+File: tests/integration/syncJsonMongo.test.js
+
+1) Đồng bộ JSON sang MongoDB (JSON to MongoDB Sync)
+- Trường hợp: Đồng bộ dữ liệu JSON có communes
+  Cách test: Mock JSON với 2 tỉnh, mỗi tỉnh có communes, POST /units cho tỉnh, Unit.create cho communes
+  Kỳ vọng: 2 tỉnh và 2 communes trong MongoDB
+- Trường hợp: Xử lý dữ liệu JSON thiếu communes
+  Cách test: Mock JSON với 1 tỉnh không có communes, POST /units
+  Kỳ vọng: 1 tỉnh, 0 communes trong MongoDB
+- Trường hợp: Xử lý dữ liệu JSON có mảng communes rỗng
+  Cách test: Mock JSON với 1 tỉnh có communes: [], POST /units
+  Kỳ vọng: 1 tỉnh, 0 communes trong MongoDB
+
+2) Đồng bộ MongoDB sang JSON (MongoDB to JSON Sync)
+- Trường hợp: Đồng bộ dữ liệu MongoDB có communes sang JSON
+  Cách test: Unit.create 1 tỉnh và 1 commune, query và map sang JSON format
+  Kỳ vọng: JSON có 1 tỉnh với 1 commune
+- Trường hợp: Đồng bộ dữ liệu MongoDB không có communes sang JSON
+  Cách test: Unit.create chỉ 1 tỉnh, query và map sang JSON format
+  Kỳ vọng: JSON có 1 tỉnh với communes rỗng
+
+3) Đồng bộ hai chiều (Bidirectional Sync)
+- Trường hợp: Duy trì tính nhất quán giữa JSON và MongoDB
+  Cách test: JSON → MongoDB → JSON, so sánh dữ liệu
+  Kỳ vọng: Dữ liệu nhất quán ở cả hai nơi
+- Trường hợp: Xử lý cập nhật trong MongoDB và đồng bộ sang JSON
+  Cách test: Tạo unit → cập nhật → đồng bộ sang JSON
+  Kỳ vọng: JSON chứa dữ liệu đã cập nhật
+- Trường hợp: Xử lý xóa trong MongoDB và đồng bộ sang JSON
+  Cách test: Tạo unit → xóa → đồng bộ sang JSON
+  Kỳ vọng: JSON không chứa unit đã xóa
+
+4) Xử lý lỗi (Error Handling)
+- Trường hợp: Xử lý lỗi đọc file JSON
+  Cách test: Mock fs.readFileSync throw "ENOENT: no such file or directory"
+  Kỳ vọng: Throw lỗi kỳ vọng
+- Trường hợp: Xử lý lỗi parse JSON
+  Cách test: Mock fs.readFileSync trả về "invalid json"
+  Kỳ vọng: Throw lỗi parse
+- Trường hợp: Xử lý lỗi ghi file JSON
+  Cách test: Mock fs.writeFileSync throw "ENOSPC: no space left on device"
+  Kỳ vọng: Throw lỗi kỳ vọng
+- Trường hợp: Xử lý lỗi kết nối MongoDB
+  Cách test: Mock Unit.find throw "MongoDB connection failed"
+  Kỳ vọng: Throw lỗi kỳ vọng
+
+5) Kiểm thử hiệu năng (Performance Tests)
+- Trường hợp: Xử lý đồng bộ dataset lớn hiệu quả
+  Cách test: 10 tỉnh, mỗi tỉnh 5 communes, đo thời gian sync
+  Kỳ vọng: Sync < 10s, Write < 1s, đúng số lượng dữ liệu
+
+6) Kiểm thử tích hợp (Integration Tests)
+- Trường hợp: Pipeline xử lý dữ liệu hoàn chỉnh
+  Cách test: Mock JSON → MongoDB → JSON với dữ liệu phức tạp
+  Kỳ vọng: Bảo toàn cấu trúc, số lượng và trường đúng
+- Trường hợp: Xử lý dữ liệu với các trường hợp biên
+  Cách test: Dữ liệu rỗng, thiếu trường, format không chuẩn
+  Kỳ vọng: Xử lý đúng và không crash
+- Trường hợp: Đồng bộ với dữ liệu thực tế
+  Cách test: Sử dụng dữ liệu giống production
+  Kỳ vọng: Hiệu suất và độ chính xác đạt yêu cầu
+
+7) Kiểm thử bảo mật (Security Tests)
+- Trường hợp: Xử lý dữ liệu nhạy cảm
+  Cách test: Mock JSON chứa thông tin nhạy cảm
+  Kỳ vọng: Không leak thông tin, xử lý an toàn
+- Trường hợp: Xử lý dữ liệu độc hại
+  Cách test: Mock JSON chứa script injection
+  Kỳ vọng: Không thực thi script, xử lý an toàn
+
+8) Kiểm thử khả năng mở rộng (Scalability Tests)
+- Trường hợp: Xử lý dữ liệu rất lớn
+  Cách test: 1000+ tỉnh, mỗi tỉnh 100+ communes
+  Kỳ vọng: Hoàn thành trong thời gian hợp lý
+- Trường hợp: Xử lý đồng thời nhiều request
+  Cách test: Promise.all với nhiều sync operation
+  Kỳ vọng: Không bị deadlock, hoàn thành đúng thứ tự

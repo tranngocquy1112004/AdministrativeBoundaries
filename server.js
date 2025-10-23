@@ -61,3 +61,4 @@ app.listen(PORT, () => {
   console.log("   • POST   /convert");
   console.log("   • CRUD   /units");
 });
+export default app;

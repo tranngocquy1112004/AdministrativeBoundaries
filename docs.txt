@@ -22,4 +22,4 @@ API lấy từ: https://addresskit.cas.so/ (Đã GET hết API lưu vào json)
 23/10/2025 - 10:30: Hoàn thành cơ bản việc Thêm, sửa, xóa, restore của json được update luôn trong MongoDB,
                     không call API nữa mà gọi trực tiếp json và sẽ có biện pháp để khi server Mongo sập thì
                     sẽ lấy trực tiếp dữ liệu từ json vào.
-
+             11:07: Tạo mapping test, bắt đầu test tất cả hệ thống

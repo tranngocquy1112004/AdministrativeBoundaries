@@ -13,6 +13,9 @@ export default {
 
   // 🔍 Cấu hình module import
   moduleFileExtensions: ["js", "json", "jsx", "node"],
+  
+  // 🔄 Transform ESM modules
+  transform: {},
 
   // 🧩 Hiển thị chi tiết kết quả test
   verbose: true,

@@ -16,3 +16,8 @@
 [2025-10-22T13:22:56.017Z] INFO: 🔁 Bắt đầu tải dữ liệu hành chính...
 [2025-10-22T13:22:56.509Z] INFO: ✅ Lấy 34 tỉnh/thành
 [2025-10-22T13:23:01.312Z] INFO: 💾 Đã lưu dữ liệu vào D:\Booking\AdministrativeBoundaries\data\full-address.json
+[2025-10-23T08:54:02.804Z] INFO: Test info message
+[2025-10-23T08:54:02.814Z] ERROR: Test error message
+[2025-10-23T08:54:02.819Z] INFO: ✅ Lấy 34 tỉnh/thành
+[2025-10-23T08:54:02.821Z] INFO: 💾 Đã lưu dữ liệu vào /mock/path/data/full-address.json
+[2025-10-23T08:54:02.823Z] ERROR: ❌ Lỗi khi fetch dữ liệu: Network error

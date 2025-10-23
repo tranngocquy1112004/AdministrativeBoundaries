@@ -1,0 +1,157 @@
+Tổng hợp các trường hợp kiểm thử (Fetcher)
+
+File: tests/fetcher/index.test.js
+
+1) Cấu hình môi trường (Environment Configuration)
+- Trường hợp: Dùng API_BASE mặc định khi không có biến môi trường
+  Cách test: Xóa process.env.API_BASE, lấy giá trị fallback
+  Kỳ vọng: "https://production.cas.so/address-kit"
+- Trường hợp: Dùng API_BASE tuỳ chỉnh khi có biến môi trường
+  Cách test: Gán process.env.API_BASE, đọc giá trị
+  Kỳ vọng: Giá trị tuỳ chỉnh được trả về
+- Trường hợp: Dùng EFFECTIVE_DATE mặc định khi không có biến môi trường
+  Cách test: Xóa process.env.EFFECTIVE_DATE, lấy giá trị fallback
+  Kỳ vọng: "latest"
+- Trường hợp: Dùng EFFECTIVE_DATE tuỳ chỉnh khi có biến môi trường
+  Cách test: Gán process.env.EFFECTIVE_DATE, đọc giá trị
+  Kỳ vọng: Giá trị ngày được trả về
+
+2) Xử lý dữ liệu (Data Processing)
+- Trường hợp: Chuẩn hoá dữ liệu tỉnh/thành để luôn có mảng communes rỗng
+  Cách test: Map qua danh sách tỉnh, thêm communes: []
+  Kỳ vọng: Mỗi tỉnh có thuộc tính communes là []
+- Trường hợp: Bổ sung thông tin tỉnh vào dữ liệu xã/phường
+  Cách test: Map qua danh sách xã, thêm provinceCode/provinceName
+  Kỳ vọng: Các trường bổ sung tồn tại và đúng giá trị
+- Trường hợp: Dữ liệu tỉnh/thành rỗng
+  Cách test: Truyền vào mảng []
+  Kỳ vọng: Trả về []
+- Trường hợp: Dữ liệu xã/phường rỗng
+  Cách test: Truyền vào mảng []
+  Kỳ vọng: Trả về []
+- Trường hợp: Dữ liệu tỉnh/thành không đầy đủ (thiếu name/code)
+  Cách test: Trộn phần tử hợp lệ và không hợp lệ
+  Kỳ vọng: Giữ nguyên phần tử; kiểm tra có/không có field tương ứng
+- Trường hợp: Dữ liệu xã/phường không đầy đủ (thiếu name/code)
+  Cách test: Trộn phần tử hợp lệ và không hợp lệ
+  Kỳ vọng: Giữ nguyên phần tử; kiểm tra có/không có field tương ứng
+
+3) Thao tác JSON (mức logic, không dùng fs thật)
+- Trường hợp: Parse JSON hợp lệ
+  Cách test: JSON.stringify rồi JSON.parse
+  Kỳ vọng: Kết quả parse giống dữ liệu ban đầu
+- Trường hợp: Phát hiện JSON không hợp lệ
+  Cách test: Parse chuỗi invalid
+  Kỳ vọng: Ném ngoại lệ
+- Trường hợp: Xử lý dữ liệu tỉnh từ JSON đã parse
+  Cách test: Dùng mảng mock có communes
+  Kỳ vọng: Số lượng và thuộc tính đúng
+- Trường hợp: Xử lý dữ liệu xã từ JSON đã parse
+  Cách test: Dùng mảng mock có các trường provinceCode/provinceName
+  Kỳ vọng: Thuộc tính tỉnh có mặt và đúng giá trị
+
+4) Thao tác đường dẫn (chuỗi ký tự)
+- Trường hợp: Ghép đường dẫn file chuẩn
+  Cách test: Xây dựng "data/full-address.json"
+  Kỳ vọng: Trả về đúng đường dẫn
+- Trường hợp: Đường dẫn có khoảng trắng
+  Cách test: Ghép "/path with spaces" và tên file
+  Kỳ vọng: Trả về đúng đường dẫn
+- Trường hợp: Đường dẫn có ký tự đặc biệt
+  Cách test: Ghép "/path/with/special@chars#" và tên file
+  Kỳ vọng: Trả về đúng đường dẫn
+- Trường hợp: Xử lý khối dữ liệu lớn stringify/parse
+  Cách test: 1000 phần tử → stringify → parse
+  Kỳ vọng: Số lượng đúng, mã code biên kiểm tra đúng
+
+5) Kiểm thử hiệu năng (giả lập)
+- Trường hợp: Hiệu năng parse dữ liệu lớn
+  Cách test: 1000 tỉnh, mỗi tỉnh 100 xã; stringify + parse
+  Kỳ vọng: Hoàn thành dưới ngưỡng thời gian; số lượng đúng
+- Trường hợp: Thao tác đồng thời (giả lập)
+  Cách test: Promise.all trên nhiều thao tác JSON
+  Kỳ vọng: Trong giới hạn thời gian
+
+6) Kiểm thử tích hợp (giả lập luồng)
+- Trường hợp: Pipeline xử lý dữ liệu hoàn chỉnh
+  Cách test: Mock tỉnh + xã → xử lý → stringify/parse
+  Kỳ vọng: Bảo toàn cấu trúc; số lượng và trường đúng
+
+----------------------------------------
+
+File: tests/fetcher/schedule.test.js
+
+1) Lập lịch cron (dữ liệu thuần)
+- Trường hợp: Biểu thức cron chạy hằng ngày
+  Cách test: Tạo object lịch với "0 0 * * *" và timezone
+  Kỳ vọng: Biểu thức/timezone/scheduled chính xác
+- Trường hợp: Biểu thức cron tuỳ chỉnh (mỗi 6 giờ)
+  Cách test: Dùng "0 */6 * * *"
+  Kỳ vọng: Biểu thức/timezone/scheduled chính xác
+- Trường hợp: Timezone khác
+  Cách test: Dùng timezone "UTC"
+  Kỳ vọng: Biểu thức/timezone/scheduled chính xác
+- Trường hợp: Chạy ngay khi khởi tạo
+  Cách test: Thêm runOnInit: true
+  Kỳ vọng: Cờ runOnInit là true
+
+2) Thực thi lịch (mô phỏng gọi hàm)
+- Trường hợp: Thực thi hàm khi đến lịch
+  Cách test: jest.fn().mockResolvedValue → gọi execute()
+  Kỳ vọng: Hàm được gọi
+- Trường hợp: Xử lý lỗi khi thực thi
+  Cách test: jest.fn().mockRejectedValue → await execute()
+  Kỳ vọng: Bị reject với lỗi kỳ vọng
+- Trường hợp: Ghi log khi bắt đầu
+  Cách test: Đặt schedule.log là chuỗi
+  Kỳ vọng: Chuỗi log khớp
+- Trường hợp: Ghi log khi hoàn tất
+  Cách test: execute() resolve; log là chuỗi
+  Kỳ vọng: Chuỗi log khớp
+
+3) Quản lý lịch (vòng đời)
+- Trường hợp: Bắt đầu job
+  Cách test: start: jest.fn(); gọi start()
+  Kỳ vọng: Hàm start được gọi
+- Trường hợp: Dừng job
+  Cách test: stop: jest.fn(); gọi stop()
+  Kỳ vọng: Hàm stop được gọi
+- Trường hợp: Hủy job
+  Cách test: destroy: jest.fn(); gọi destroy()
+  Kỳ vọng: Hàm destroy được gọi
+- Trường hợp: Kiểm tra trạng thái đang chạy
+  Cách test: running: jest.fn().mockReturnValue(true)
+  Kỳ vọng: Trả về true
+
+4) Xử lý lỗi (độ bền đầu vào)
+- Trường hợp: Biểu thức cron không hợp lệ
+  Cách test: Đặt expression chuỗi không hợp lệ
+  Kỳ vọng: Vẫn lưu trong object schedule
+- Trường hợp: Thiếu hàm callback
+  Cách test: callback: null
+  Kỳ vọng: Chấp nhận và giữ nguyên null
+- Trường hợp: Timezone không hợp lệ
+  Cách test: timezone: "Invalid/Timezone"
+  Kỳ vọng: Vẫn lưu trong object schedule
+- Trường hợp: Lỗi khi thực thi
+  Cách test: execute() reject
+  Kỳ vọng: Bị reject với lỗi kỳ vọng
+
+5) Hiệu năng (giả lập)
+- Trường hợp: Lập 100 lịch thường xuyên
+  Cách test: Tạo 100 object schedule
+  Kỳ vọng: Đếm đúng, biểu thức đúng
+- Trường hợp: Thực thi đồng thời 10 job
+  Cách test: Promise.all trên execute()
+  Kỳ vọng: Tất cả được gọi; đếm chính xác
+- Trường hợp: Kiểm tra bộ nhớ (1.000 job)
+  Cách test: Push 1.000 schedule và đọc chênh lệch heap
+  Kỳ vọng: Dưới ngưỡng bộ nhớ
+
+6) Tích hợp (kết hợp hành vi)
+- Trường hợp: Vòng đời đủ: start → stop → destroy
+  Cách test: jest.fn() cho các method; gọi tuần tự
+  Kỳ vọng: Tất cả method được gọi; thuộc tính giữ nguyên
+- Trường hợp: Nhiều lịch cùng lúc
+  Cách test: Tạo daily/hourly/weekly
+  Kỳ vọng: Tất cả hiện diện, biểu thức/timezone đúng
