@@ -1,0 +1,71 @@
+tests/
+├── setup/
+│   ├── jest.setup.js          # Khởi tạo môi trường test (MongoDB, ENV)
+│   ├── jest.teardown.js       # Dọn dẹp sau khi test xong
+│   └── mockData.js            # Dữ liệu giả để test (ví dụ mẫu đơn vị hành chính)
+│
+├── server/
+│   ├── units.test.js          # Test CRUD /units (create, update, delete, restore)
+│   ├── history.test.js        # Test khôi phục, lấy lịch sử
+│   ├── convert.test.js        # Test API chuyển đổi địa chỉ (convertController)
+│   ├── search.test.js         # Test tìm kiếm địa chỉ (searchController)
+│   ├── provinces.test.js      # Test API danh sách tỉnh/thành
+│   ├── communes.test.js       # Test API danh sách xã/phường
+│   └── tree.test.js           # Test API phân cấp hành chính (treeController)
+│
+├── middleware/
+│   ├── cacheMiddleware.test.js  # Test caching layer (nếu bạn có Redis hoặc cache file)
+│   ├── errorHandler.test.js     # Test xử lý lỗi toàn cục
+│   └── validateUnit.test.js     # Test validate dữ liệu đầu vào
+│
+├── utils/
+│   ├── db.test.js             # Test kết nối Mongo, kiểm tra schema Unit
+│   ├── file.test.js           # Test helper đọc/ghi file JSON
+│   ├── finder.test.js         # Test hàm tìm kiếm địa chỉ trong file JSON
+│   ├── loader.test.js         # Test hàm load dữ liệu từ file
+│   ├── response.test.js       # Test format phản hồi chuẩn
+│   ├── hash.test.js           # Test mã hóa hash ID (nếu có)
+│   └── logger.test.js         # Test ghi log hệ thống
+│
+├── scripts/
+│   ├── importAddress.test.js  # Test import dữ liệu địa chỉ vào Mongo
+│   └── importUnits.test.js    # Test import đơn vị hành chính
+│
+├── fetcher/
+│   ├── index.test.js          # Test hàm fetch API tỉnh/huyện/xã
+│   └── schedule.test.js       # Test auto-fetch định kỳ
+│
+├── integration/
+│   ├── fullFlow.test.js       # Test luồng tổng hợp (import → CRUD → restore → delete)
+│   └── syncJsonMongo.test.js  # Test đồng bộ JSON ↔ MongoDB
+│
+├── performance/
+│   └── bulkInsert.test.js     # Test hiệu năng thêm nhiều đơn vị hành chính
+│
+└── jest.config.js             # Cấu hình Jest toàn cục
+
+Mapping chi tiết:
+File Test	                            Mục tiêu kiểm thử	                                File thật được test	                                                                    Dữ liệu test (nguồn)
+server/units.test.js	                Test CRUD + restore của đơn vị hành chính	        server/controllers/unitController.js + server/routes/units.js	                        Dùng file data/full-address.json và model Unit, UnitHistory
+server/history.test.js	                Test lịch sử cập nhật / khôi phục	                server/controllers/unitController.js (hàm getHistory, restoreFromHistory)	            Dữ liệu sinh ra trong MongoDB khi test CRUD
+server/convert.test.js	                Test API chuyển đổi địa chỉ	                        server/controllers/convertController.js	                                                Mock API ngoài (hoặc fake JSON mẫu)
+server/search.test.js	                Test API tìm kiếm địa chỉ	                        server/controllers/searchController.js	                                                Dữ liệu trong MongoDB (Unit, Address)
+server/provinces.test.js	            Test danh sách tỉnh / thành	                        server/controllers/provinceController.js	                                            data/full-address.json
+server/communes.test.js	                Test danh sách xã / phường theo tỉnh	            server/controllers/communeController.js	                                                data/full-address.json
+server/tree.test.js	                    Test phân cấp hành chính	                        server/controllers/treeController.js	                                                Dữ liệu Mongo + file JSON
+middleware/validateUnit.test.js	        Test validate input	                                server/middleware/validateUnit.js	                                                    Input mẫu mockData.js
+middleware/errorHandler.test.js	        Test xử lý lỗi server	                            server/middleware/errorHandler.js	                                                    Fake lỗi runtime
+middleware/cacheMiddleware.test.js      Test cache	                                        server/middleware/cacheMiddleware.js	                                                Mock request + response
+utils/db.test.js	                    Test kết nối MongoDB	                            server/utils/db.js	                                                                    Môi trường thật (hoặc MongoMemoryServer)
+utils/file.test.js	                    Test đọc / ghi file JSON	                        server/utils/file.js	                                                                File mẫu trong tests/setup/mockData.json
+utils/finder.test.js	                Test tìm kiếm đơn vị trong JSON	                    server/utils/finder.js	                                                                JSON mẫu (mockData.js)
+utils/loader.test.js	                Test load dữ liệu địa chỉ	                        server/utils/loader.js	                                                                JSON mẫu
+utils/response.test.js	                Test format response	                            server/utils/response.js	                                                            Mock object
+utils/logger.test.js	                Test ghi log	                                    server/utils/logger.js	                                                                Mock console.log
+scripts/importAddress.test.js	        Test script import dữ liệu địa chỉ	                scripts/importAddress.js	                                                            File data/full-address.json
+scripts/importUnits.test.js	            Test script import đơn vị hành chính	            scripts/importUnits.js	                                                                File data/units.json
+fetcher/index.test.js	                Test fetch dữ liệu API	                            fetcher/index.js	                                                                    Mock API https://production.cas.so
+fetcher/schedule.test.js	            Test cron tự động import	                        fetcher/schedule.js	                                                                    Mock timer (jest.useFakeTimers)
+integration/fullFlow.test.js	        Test toàn bộ luồng CRUD	                            unitController.js, routes/units.js, Mongo + JSON	                                    Mock DB (mongodb-memory-server)
+integration/syncJsonMongo.test.js	    Test đồng bộ JSON ↔ Mongo	                        unitController.js, utils/file.js	                                                    File data/full-address.json
+performance/bulkInsert.test.js	        Test hiệu năng import hàng loạt	                    scripts/importUnits.js	                                                                10.000 bản ghi mẫu trong mockData.js

@@ -12,7 +12,7 @@
     "start": "node server.js",
     "fetch": "node fetcher/index.js",
     "schedule": "node fetcher/schedule.js",
-    "import": "node server/scripts/importUnits.js",
+    "import-units": "node server/scripts/importUnits.js",
     "import-address": "node server/scripts/importAddress.js"
   },
   "keywords": [],

@@ -8,12 +8,18 @@ npm run start → chạy server Express
 npm run fetch → gọi API tinhthanhpho.com
 npm run schedule → chạy cron job tự động
 npm test → chạy toàn bộ Jest test
-API lấy từ: https://addresskit.cas.so/ (Nên lưu vào database để lỡ trang lấy API bị sập thì vẫn sẽ còn)
+API lấy từ: https://addresskit.cas.so/ (Đã GET hết API lưu vào json)
 21/10/2025 - 4:14: Đã build cơ bản xong REST API truy cập dữ liệu-> communes, provinces và convert.
-bắt đầu tìm hiểu về cron jon(auto update)
+                   bắt đầu tìm hiểu về cron jon(auto update)
+
 22/10/2025 - 12:09: Bắt đầu cài MongoDB(Mở terminal bằng quyền admin và nhập net start MongoDB để
                     khởi động MongoDB)
              12:54: Bắt đầu kết nối project với MongoDB, port và host: mongodb://127.0.0.1:27017
              13:40: Đã chuyển toàn bộ logic CRUD của /units sang dùng MongoDB(server/models/Units.js)
              14:01: Bắt đầu đưa file full-address.json (import toàn bộ thông tin tỉnh / xã / phường vào MongoDB).
              14:11: Đã chuyển toàn bộ file full-address.json vào MongoDB.
+
+23/10/2025 - 10:30: Hoàn thành cơ bản việc Thêm, sửa, xóa, restore của json được update luôn trong MongoDB,
+                    không call API nữa mà gọi trực tiếp json và sẽ có biện pháp để khi server Mongo sập thì
+                    sẽ lấy trực tiếp dữ liệu từ json vào.
+

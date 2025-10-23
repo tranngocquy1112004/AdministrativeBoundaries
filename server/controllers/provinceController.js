@@ -1,20 +1,49 @@
-import fetch from "node-fetch";
-import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import Unit from "../models/Unit.js";
 
-dotenv.config();
+// ✅ Setup path tuyệt đối cho full-address.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const filePath = path.join(__dirname, "../../data/full-address.json");
 
 export async function getProvinces(req, res) {
   try {
-    const effectiveDate = req.query.effectiveDate || "latest";
-    const url = `${process.env.API_BASE}/${effectiveDate}/provinces`;
+    // ⚙️ Ưu tiên MongoDB
+    const provinces = await Unit.find({ level: "province" }).lean();
 
-    console.log("🔹 Fetching provinces:", url);
-    const resp = await fetch(url);
-    const data = await resp.json();
+    if (provinces.length > 0) {
+      console.log("✅ Loaded provinces from MongoDB");
+      return res.json(provinces);
+    }
 
-    return res.json(data.provinces || data);
+    // 🔁 Nếu Mongo rỗng hoặc lỗi → fallback JSON
+    console.warn("⚠️ MongoDB empty → reading from JSON file");
+    const rawData = fs.readFileSync(filePath, "utf8");
+    const data = JSON.parse(rawData);
+    return res.json(
+      data.map((p) => ({
+        code: p.code,
+        name: p.name,
+        administrativeLevel: p.administrativeLevel,
+      }))
+    );
   } catch (err) {
-    console.error("❌ Error fetching provinces:", err);
-    res.status(500).json({ error: "Failed to fetch provinces" });
+    console.error("❌ MongoDB failed → using fallback JSON:", err);
+    try {
+      const rawData = fs.readFileSync(filePath, "utf8");
+      const data = JSON.parse(rawData);
+      return res.json(
+        data.map((p) => ({
+          code: p.code,
+          name: p.name,
+          administrativeLevel: p.administrativeLevel,
+        }))
+      );
+    } catch (jsonErr) {
+      console.error("❌ JSON fallback failed:", jsonErr);
+      return res.status(500).json({ error: "Failed to load provinces" });
+    }
   }
 }

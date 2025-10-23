@@ -1,165 +1,329 @@
-// ✅ server/controllers/unitController.js
+import fs from "fs";
+import path from "path";
 import Unit from "../models/Unit.js";
-import { buildTree } from "../utils/finder.js";
+import UnitHistory from "../models/UnitHistory.js";
 
-/** GET /units */
-export async function getUnits(req, res) {
+const dataPath = path.join(process.cwd(), "data/full-address.json");
+
+/** 🔹 Helper đọc JSON */
+function readJSON() {
   try {
-    const units = await Unit.find();
-    res.json(units);
+    return JSON.parse(fs.readFileSync(dataPath, "utf8"));
   } catch (err) {
-    console.error("❌ Error fetching units:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("❌ Lỗi đọc file JSON:", err);
+    return [];
   }
 }
 
-/** GET /units/:id */
-export async function getUnitById(req, res) {
+/** 🔹 Helper ghi JSON */
+function writeJSON(data) {
   try {
-    const unit = await Unit.findById(req.params.id);
-    if (!unit) return res.status(404).json({ error: "Unit not found" });
-    res.json(unit);
+    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), "utf8");
   } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("❌ Lỗi ghi file JSON:", err);
   }
 }
 
-/** POST /units */
+/** ✅ POST /units - Thêm đơn vị hành chính */
 export async function createUnit(req, res) {
   try {
-    const { name, code, level, parentCode, boundary } = req.body;
+    const {
+      name,
+      code,
+      level,
+      parentCode,
+      boundary,
+      englishName,
+      administrativeLevel,
+      provinceCode,
+      provinceName,
+      decree,
+    } = req.body;
+
     if (!name || !code || !level)
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
 
-    const exists = await Unit.findOne({ code });
+    // 1️⃣ Đọc file JSON
+    const jsonData = readJSON();
+
+    // 2️⃣ Kiểm tra mã trùng
+    const exists =
+      jsonData.some((p) => p.code === code) ||
+      jsonData.some((p) =>
+        (p.communes || []).some((c) => c.code === code)
+      );
     if (exists)
-      return res.status(400).json({ error: "Unit code already exists" });
+      return res.status(400).json({ error: "Mã đơn vị đã tồn tại" });
 
-    const unit = new Unit({
+    // 3️⃣ Xác định vị trí thêm
+    let added = false;
+    if (level === "province") {
+      jsonData.push({
+        code,
+        name,
+        englishName: englishName || "",
+        administrativeLevel: administrativeLevel || "Tỉnh/Thành phố",
+        decree: decree || "",
+        level,
+        parentCode: null,
+        communes: [],
+      });
+      added = true;
+    } else if (level === "commune") {
+      const parent =
+        jsonData.find((p) => p.code === parentCode || p.code === provinceCode);
+      if (!parent)
+        return res.status(404).json({ error: "Không tìm thấy đơn vị cha (tỉnh/huyện)" });
+
+      parent.communes = parent.communes || [];
+      parent.communes.push({
+        code,
+        name,
+        englishName: englishName || "",
+        administrativeLevel: administrativeLevel || "Phường/Xã",
+        provinceCode,
+        provinceName,
+        decree: decree || "",
+        level,
+        parentCode,
+      });
+      added = true;
+    }
+
+    if (!added)
+      return res.status(400).json({ error: "Không thể thêm đơn vị hành chính" });
+
+    // 4️⃣ Ghi JSON
+    writeJSON(jsonData);
+
+    // 5️⃣ Lưu vào MongoDB
+    const newUnit = await Unit.create({
       name,
       code,
       level,
       parentCode: parentCode || null,
       boundary: boundary || null,
+      provinceCode,
+      provinceName,
+      decree,
       createdAt: new Date(),
       updatedAt: new Date(),
-      history: []
+      history: [],
     });
 
-    await unit.save();
-    res.status(201).json({ message: "✅ Created", unit });
+    // 6️⃣ Ghi log lịch sử
+    await UnitHistory.create({
+      code,
+      action: "create",
+      oldData: null,
+      newData: req.body,
+      changedAt: new Date(),
+    });
+
+    res.status(201).json({
+      message: "✅ Thêm đơn vị hành chính thành công",
+      data: newUnit,
+    });
   } catch (err) {
-    console.error("❌ Error creating unit:", err);
+    console.error("❌ Lỗi khi tạo đơn vị:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
-/** PUT /units/:id */
+/** ✅ PUT /units/:code - Cập nhật thông tin */
 export async function updateUnit(req, res) {
   try {
-    const unit = await Unit.findById(req.params.id);
-    if (!unit) return res.status(404).json({ error: "Unit not found" });
+    const { code } = req.params;
+    const updates = req.body;
+    const jsonData = readJSON();
 
-    const old = { ...unit.toObject() };
-    Object.assign(unit, req.body, { updatedAt: new Date() });
-    unit.history.push(old);
-    await unit.save();
-
-    res.json({ message: "✅ Updated", unit });
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-/** DELETE /units/:id */
-export async function deleteUnit(req, res) {
-  try {
-    const unit = await Unit.findById(req.params.id);
-    if (!unit) return res.status(404).json({ error: "Unit not found" });
-    await unit.deleteOne();
-    res.json({ message: "✅ Deleted" });
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-/** GET /units/search */
-export async function searchUnits(req, res) {
-  try {
-    const { name, code, level } = req.query;
-    const query = {};
-    if (name) query.name = { $regex: name, $options: "i" };
-    if (code) query.code = code;
-    if (level) query.level = level;
-
-    const units = await Unit.find(query);
-    res.json(units);
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-/** GET /units/tree */
-export async function getUnitsTree(req, res) {
-  try {
-    const data = await Unit.find();
-    const tree = buildTree(data);
-    res.json(tree);
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-/** GET /units/:id/history */
-export async function getHistory(req, res) {
-  try {
-    const unit = await Unit.findById(req.params.id);
-    if (!unit) return res.status(404).json({ error: "Unit not found" });
-    res.json(unit.history);
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-/** POST /units/:id/restore */
-export async function restoreFromHistory(req, res) {
-  try {
-    const { index } = req.body;
-    const unit = await Unit.findById(req.params.id);
-    if (!unit) return res.status(404).json({ error: "Unit not found" });
-
-    const version = unit.history[index];
-    if (!version) return res.status(400).json({ error: "Invalid history index" });
-
-    Object.assign(unit, version);
-    await unit.save();
-    res.json({ message: "✅ Restored", unit });
-  } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-export async function diffHistory(req, res) {
-  try {
-    const { id } = req.params;
-    const { old, new: newer } = req.query;
-
-    const unit = await Unit.findById(id);
-    if (!unit) return res.status(404).json({ error: "Unit not found" });
-
-    const a = unit.history?.[old];
-    const b = unit.history?.[newer] || unit;
-    if (!a || !b) return res.status(400).json({ error: "Invalid history index" });
-
-    const diff = {};
-    for (const key of Object.keys(b.toObject ? b.toObject() : b)) {
-      if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) {
-        diff[key] = { old: a[key], new: b[key] };
+    let target = null;
+    for (const p of jsonData) {
+      if (p.code === code) {
+        target = p;
+        break;
+      }
+      const c = p.communes?.find((x) => x.code === code);
+      if (c) {
+        target = c;
+        break;
       }
     }
 
-    res.json(diff);
+    if (!target)
+      return res.status(404).json({ error: "Không tìm thấy đơn vị trong JSON" });
+
+    const oldData = { ...target };
+    Object.assign(target, updates);
+    writeJSON(jsonData);
+
+    const unit = await Unit.findOneAndUpdate({ code }, updates, {
+      new: true,
+      upsert: true,
+    });
+
+    await UnitHistory.create({
+      code,
+      action: "update",
+      oldData,
+      newData: updates,
+      changedAt: new Date(),
+    });
+
+    res.json({ message: "✅ Cập nhật thành công", data: unit });
   } catch (err) {
-    console.error("❌ Error comparing history:", err);
+    console.error("❌ Lỗi cập nhật:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+/** 🗑 DELETE /units/:code - Xóa đơn vị */
+export async function deleteUnit(req, res) {
+  try {
+    const { code } = req.params;
+    const jsonData = readJSON();
+    let deleted = null;
+
+    const newData = jsonData.filter((p) => {
+      if (p.code === code) {
+        deleted = p;
+        return false;
+      }
+      if (p.communes) {
+        p.communes = p.communes.filter((c) => {
+          if (c.code === code) {
+            deleted = c;
+            return false;
+          }
+          return true;
+        });
+      }
+      return true;
+    });
+
+    if (!deleted)
+      return res.status(404).json({ error: "Không tìm thấy đơn vị cần xóa" });
+
+    writeJSON(newData);
+    await Unit.deleteOne({ code });
+
+    await UnitHistory.create({
+      code,
+      action: "delete",
+      oldData: deleted,
+      newData: null,
+      changedAt: new Date(),
+    });
+
+    res.json({ message: "✅ Đã xóa và lưu lịch sử", deleted });
+  } catch (err) {
+    console.error("❌ Lỗi xóa:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+/** 🕓 GET /units/:code/history - Lấy lịch sử */
+export async function getHistory(req, res) {
+  try {
+    const { code } = req.params;
+    const history = await UnitHistory.find({ code }).sort({ changedAt: -1 });
+    if (!history.length)
+      return res.status(404).json({ error: "Không có lịch sử cho mã này" });
+    res.json(history);
+  } catch (err) {
+    console.error("❌ Lỗi lấy lịch sử:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+/** 🔄 POST /units/:code/restore - Khôi phục lịch sử */
+export async function restoreFromHistory(req, res) {
+  try {
+    const { code } = req.params;
+    const { version } = req.body;
+
+    const record = await UnitHistory.findOne({
+      code,
+      ...(version ? { _id: version } : {}),
+    }).sort({ changedAt: -1 });
+
+    if (!record)
+      return res.status(404).json({ error: "Không tìm thấy bản ghi để khôi phục" });
+
+    const restoredData = record.oldData || record.newData;
+    if (!restoredData)
+      return res.status(400).json({ error: "Không có dữ liệu để khôi phục" });
+
+    const jsonData = readJSON();
+    let restored = false;
+
+    if (restoredData.level === "province") {
+      const exists = jsonData.find((p) => p.code === restoredData.code);
+      if (exists) Object.assign(exists, restoredData);
+      else jsonData.push(restoredData);
+      restored = true;
+    } else if (restoredData.level === "commune") {
+      const parent = jsonData.find(
+        (p) =>
+          p.code === restoredData.provinceCode ||
+          p.code === restoredData.parentCode
+      );
+      if (parent) {
+        parent.communes = parent.communes || [];
+        const exists = parent.communes.find(
+          (c) => c.code === restoredData.code
+        );
+        if (exists) Object.assign(exists, restoredData);
+        else parent.communes.push(restoredData);
+        restored = true;
+      }
+    }
+
+    if (!restored) jsonData.push(restoredData);
+    writeJSON(jsonData);
+
+    await Unit.findOneAndUpdate({ code }, restoredData, { upsert: true });
+
+    await UnitHistory.create({
+      code,
+      action: "restore",
+      oldData: null,
+      newData: restoredData,
+      changedAt: new Date(),
+    });
+
+    res.json({
+      message: "✅ Đã khôi phục thành công (Mongo + JSON đã đồng bộ)",
+      restored: restoredData,
+    });
+  } catch (err) {
+    console.error("❌ Lỗi khôi phục:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+/** 🔍 GET /units/:code - Lấy chi tiết đơn vị hành chính */
+export async function getUnitById(req, res) {
+  try {
+    const { code } = req.params;
+
+    // 1️⃣ Tìm trong MongoDB trước
+    const unit = await Unit.findOne({ code });
+    if (unit) return res.json(unit);
+
+    // 2️⃣ Nếu không có trong Mongo → tìm trong JSON
+    const jsonData = readJSON();
+    let found =
+      jsonData.find((p) => p.code === code) ||
+      jsonData
+        .flatMap((p) => p.communes || [])
+        .find((c) => c.code === code);
+
+    if (!found)
+      return res.status(404).json({ error: "Không tìm thấy đơn vị hành chính" });
+
+    res.json(found);
+  } catch (err) {
+    console.error("❌ Lỗi lấy chi tiết đơn vị:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 }

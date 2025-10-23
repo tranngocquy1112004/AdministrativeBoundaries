@@ -2,77 +2,64 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
-import Unit from "../models/Unit.js"; // 👉 dùng model Unit thay vì Address
+import Unit from "../models/Unit.js";
+
 dotenv.config();
 
 const __dirname = path.resolve();
 const dataPath = path.join(__dirname, "data/full-address.json");
 
-/**
- * 🔁 Đệ quy tách dữ liệu đa cấp (province → district → commune)
- */
-function flattenUnits(data, parentCode = null, level = "province") {
-  const flat = [];
-
-  data.forEach(item => {
-    const { name, code, boundary, districts, communes } = item;
-
-    // Ghi bản ghi hiện tại
-    flat.push({
-      name: name?.replace(/^Tỉnh |^Thành phố /i, "").trim(),
-      code,
-      level,
-      parentCode,
-      boundary: boundary || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      history: []
-    });
-
-    // Nếu có danh sách huyện
-    if (districts?.length) {
-      flat.push(...flattenUnits(districts, code, "district"));
-    }
-
-    // Nếu có danh sách xã
-    if (communes?.length) {
-      flat.push(...flattenUnits(communes, code, "commune"));
-    }
-  });
-
-  return flat;
-}
-
-/**
- * 🚀 Import dữ liệu vào MongoDB
- */
-async function importData() {
+async function importAddress() {
   try {
+    console.log("🟡 Connecting to MongoDB...");
     await mongoose.connect(
       process.env.MONGO_URI || "mongodb://127.0.0.1:27017/administrative_boundaries"
     );
-    console.log("✅ MongoDB connected");
+    console.log("✅ Connected to MongoDB");
 
-    // Đọc dữ liệu
-    const text = fs.readFileSync(dataPath, "utf8");
-    const raw = JSON.parse(text);
+    if (!fs.existsSync(dataPath)) {
+      throw new Error(`Không tìm thấy file dữ liệu tại: ${dataPath}`);
+    }
 
-    // Làm phẳng dữ liệu
-    const flattened = flattenUnits(raw);
-    console.log(`📦 Found ${flattened.length} administrative units`);
+    const jsonData = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+    console.log(`📦 Đọc ${jsonData.length} tỉnh/thành từ full-address.json`);
 
-    // Xóa dữ liệu cũ
     await Unit.deleteMany({});
-    console.log("🧹 Old data cleared.");
+    console.log("🧹 Đã xoá toàn bộ dữ liệu cũ trong collection 'units'");
 
-    // Ghi dữ liệu mới
-    await Unit.insertMany(flattened);
+    for (const province of jsonData) {
+      // 👉 Thêm cấp tỉnh
+      await Unit.create({
+        name: province.name,
+        code: province.code,
+        level: "province",
+        parentCode: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // 👉 Thêm cấp xã/phường trực tiếp dưới tỉnh
+      if (province.communes && Array.isArray(province.communes)) {
+        for (const commune of province.communes) {
+          await Unit.create({
+            name: commune.name,
+            code: commune.code,
+            level: "commune",
+            parentCode: province.code,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+      }
+    }
+
     console.log("✅ Import completed successfully!");
   } catch (err) {
-    console.error("❌ Error importing:", err);
+    console.error("❌ Import failed:", err.message);
   } finally {
-    await mongoose.connection.close();
+    await mongoose.disconnect();
+    console.log("🔌 MongoDB disconnected");
   }
 }
 
-importData();
+importAddress();
