@@ -1,22 +1,23 @@
 import mongoose from "mongoose";
 
-const communeSchema = new mongoose.Schema({
-  code: String,
+const addressSchema = new mongoose.Schema({
   name: String,
+  code: { type: String, unique: true },
   englishName: String,
   administrativeLevel: String,
   provinceCode: String,
   provinceName: String,
-  decree: String
-});
-
-const provinceSchema = new mongoose.Schema({
-  code: String,
-  name: String,
-  englishName: String,
-  administrativeLevel: String,
   decree: String,
-  communes: [communeSchema]
+  level: {
+    type: String,
+    enum: ["province", "district", "commune"],
+    required: true
+  },
+  parentCode: String,
+  boundary: Object,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  history: Array
 });
 
-export default mongoose.model("Address", provinceSchema);
+export default mongoose.model("Address", addressSchema);
