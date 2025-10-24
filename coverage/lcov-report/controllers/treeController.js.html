@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">78.57% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>11/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>3/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">76.92% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>10/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -99,23 +99,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -127,24 +127,24 @@
  * GET /tree
  * Tạo cây phân cấp từ MongoDB
  */
-export async function <span class="fstat-no" title="function not covered" >getTree(</span>req, res) {
-<span class="cstat-no" title="statement not covered" >  try {</span>
-    const units = <span class="cstat-no" title="statement not covered" >await Unit.find();</span>
-    const map = <span class="cstat-no" title="statement not covered" >{};</span>
+export async function getTree(req, res) {
+  try {
+    const units = await Unit.find();
+    const map = {};
 &nbsp;
     // Gom dữ liệu theo parentCode
-<span class="cstat-no" title="statement not covered" >    for (const u of units) <span class="cstat-no" title="statement not covered" >map[u.code] = { ...u.toObject(), children: [] };</span></span>
-    const tree = <span class="cstat-no" title="statement not covered" >[];</span>
+    for (const u of units) map[u.code] = { ...u.toObject(), children: [] };
+    const tree = [];
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    for (const u of units) {</span>
-<span class="cstat-no" title="statement not covered" >      if (u.parentCode &amp;&amp; map[u.parentCode]) {</span>
+    for (const u of units) {
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (u.parentCode &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >map[u.parentCode])</span> {
 <span class="cstat-no" title="statement not covered" >        map[u.parentCode].children.push(map[u.code]);</span>
-      } else <span class="cstat-no" title="statement not covered" >if (u.level === "province") {</span>
-<span class="cstat-no" title="statement not covered" >        tree.push(map[u.code]);</span>
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>if (u.level === "province") {
+        tree.push(map[u.code]);
       }
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    res.json(tree);</span>
+    res.json(tree);
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    console.error("❌ Tree error:", err);</span>
 <span class="cstat-no" title="statement not covered" >    res.status(500).json({ error: "Internal Server Error" });</span>
@@ -157,7 +157,7 @@ export async function <span class="fstat-no" title="function not covered" >getTr
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-24T03:40:49.091Z
+                at 2025-10-24T06:48:06.741Z
             </div>
         <script src="../prettify.js"></script>
         <script>

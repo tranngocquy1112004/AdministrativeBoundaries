@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">76.92% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>10/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>5/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">80% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>8/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -90,16 +90,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -110,17 +110,17 @@
 /**
  * GET /search?name=Hà Nội&amp;level=province
  */
-export async function <span class="fstat-no" title="function not covered" >searchUnits(</span>req, res) {
-<span class="cstat-no" title="statement not covered" >  try {</span>
-    const { name, level, code } = <span class="cstat-no" title="statement not covered" >req.query;</span>
-    const query = <span class="cstat-no" title="statement not covered" >{};</span>
+export async function searchUnits(req, res) {
+  try {
+    const { name, level, code } = req.query;
+    const query = {};
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    if (name) <span class="cstat-no" title="statement not covered" >query.name = { $regex: name, $options: "i" };</span></span>
-<span class="cstat-no" title="statement not covered" >    if (level) <span class="cstat-no" title="statement not covered" >query.level = level;</span></span>
-<span class="cstat-no" title="statement not covered" >    if (code) <span class="cstat-no" title="statement not covered" >query.code = code;</span></span>
+    if (name) query.name = { $regex: name, $options: "i" };
+    if (level) query.level = level;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (code) <span class="cstat-no" title="statement not covered" >query.code = code;</span>
 &nbsp;
-    const result = <span class="cstat-no" title="statement not covered" >await Unit.find(query).limit(50);</span>
-<span class="cstat-no" title="statement not covered" >    res.json(result);</span>
+    const result = await Unit.find(query).limit(50);
+    res.json(result);
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    console.error("❌ Search error:", err);</span>
 <span class="cstat-no" title="statement not covered" >    res.status(500).json({ error: "Internal Server Error" });</span>
@@ -133,7 +133,7 @@ export async function <span class="fstat-no" title="function not covered" >searc
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-24T03:40:49.091Z
+                at 2025-10-24T06:48:06.741Z
             </div>
         <script src="../prettify.js"></script>
         <script>

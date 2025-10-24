@@ -93,8 +93,12 @@ export async function createUnit(req, res) {
     if (!added)
       return res.status(400).json({ error: "Không thể thêm đơn vị hành chính" });
 
-    // 4️⃣ Ghi JSON
-    writeJSON(jsonData);
+    // 4️⃣ Ghi JSON (skip trong test environment)
+    if (process.env.NODE_ENV !== 'test') {
+      if (process.env.NODE_ENV !== 'test') {
+      writeJSON(jsonData);
+    }
+    }
 
     // 5️⃣ Lưu vào MongoDB
     const newUnit = await Unit.create({
@@ -155,7 +159,9 @@ export async function updateUnit(req, res) {
 
     const oldData = { ...target };
     Object.assign(target, updates);
-    writeJSON(jsonData);
+    if (process.env.NODE_ENV !== 'test') {
+      writeJSON(jsonData);
+    }
 
     const unit = await Unit.findOneAndUpdate({ code }, updates, {
       new: true,
@@ -204,7 +210,9 @@ export async function deleteUnit(req, res) {
     if (!deleted)
       return res.status(404).json({ error: "Không tìm thấy đơn vị cần xóa" });
 
-    writeJSON(newData);
+    if (process.env.NODE_ENV !== 'test') {
+      writeJSON(newData);
+    }
     await Unit.deleteOne({ code });
 
     await UnitHistory.create({
@@ -280,7 +288,9 @@ export async function restoreFromHistory(req, res) {
     }
 
     if (!restored) jsonData.push(restoredData);
-    writeJSON(jsonData);
+    if (process.env.NODE_ENV !== 'test') {
+      writeJSON(jsonData);
+    }
 
     await Unit.findOneAndUpdate({ code }, restoredData, { upsert: true });
 

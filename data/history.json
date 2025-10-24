@@ -80,5 +80,19 @@
         }
       ]
     }
+  },
+  {
+    "action": "deleted",
+    "deletedAt": "2025-10-24T03:51:18.432Z",
+    "deletedBy": "system",
+    "data": {
+      "name": "Phường Cần Xóa",
+      "code": "01001300",
+      "level": "commune",
+      "parentCode": "01001",
+      "createdAt": "2025-10-24T03:51:18.411Z",
+      "updatedAt": "2025-10-24T03:51:18.411Z",
+      "history": []
+    }
   }
 ]
