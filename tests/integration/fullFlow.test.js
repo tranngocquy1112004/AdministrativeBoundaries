@@ -140,7 +140,7 @@ describe("🔄 Full Flow Integration Tests", () => {
       // 5. Delete the unit
       const deleteResponse = await request(app).delete("/units/99");
       expect(deleteResponse.status).toBe(200);
-      expect(deleteResponse.body.message).toContain("xóa");
+      expect(deleteResponse.body.message).toContain("Xóa thành công");
 
       // 6. Verify unit is deleted
       const getDeletedResponse = await request(app).get("/units/99");

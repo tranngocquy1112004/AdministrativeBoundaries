@@ -1,4 +1,5 @@
 // tests/scripts/importAddress.test.js
+import { jest } from "@jest/globals";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
@@ -28,6 +29,15 @@ describe("📥 Import Address Script Tests", () => {
     // Reset environment variables
     delete process.env.MONGO_URI;
     delete process.env.MONGODB_URI;
+    
+    // Setup mocks
+    jest.spyOn(fs, 'readFileSync').mockReturnValue('[]');
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+    jest.spyOn(path, 'join').mockReturnValue('/mock/path/data/full-address.json');
+    jest.spyOn(path, 'resolve').mockReturnValue('/mock/path');
+    jest.spyOn(dotenv, 'config').mockReturnValue({});
+    jest.spyOn(mongoose, 'connect').mockResolvedValue({ connection: { host: 'localhost' } });
+    jest.spyOn(mongoose, 'disconnect').mockResolvedValue();
   });
 
   afterEach(() => {
@@ -36,12 +46,12 @@ describe("📥 Import Address Script Tests", () => {
   });
 
   describe("Script Execution", () => {
-    test("should execute importAddress function", () => {
+    test("should execute importAddress function", async () => {
       // Arrange
       mockImportAddress.mockResolvedValue();
 
       // Act
-      const result = mockImportAddress();
+      const result = await mockImportAddress();
 
       // Assert
       expect(mockImportAddress).toHaveBeenCalled();

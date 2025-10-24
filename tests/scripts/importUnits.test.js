@@ -1,4 +1,5 @@
 // tests/scripts/importUnits.test.js
+import { jest } from "@jest/globals";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
@@ -6,22 +7,10 @@ import dotenv from "dotenv";
 import Unit from "../../server/models/Unit.js";
 
 // Mock dependencies
-jest.mock("mongoose", () => ({
-  connect: jest.fn(),
-  connection: {
-    readyState: 0
-  }
-}));
-jest.mock("fs", () => ({
-  readFileSync: jest.fn(),
-  existsSync: jest.fn()
-}));
-jest.mock("path", () => ({
-  join: jest.fn().mockReturnValue("/mock/path/data/full-address.json")
-}));
-jest.mock("dotenv", () => ({
-  config: jest.fn()
-}));
+jest.mock("mongoose");
+jest.mock("fs");
+jest.mock("path");
+jest.mock("dotenv");
 
 // Mock the importUnits function
 const mockImportUnits = jest.fn();
@@ -40,6 +29,15 @@ describe("📥 Import Units Script Tests", () => {
     // Reset environment variables
     delete process.env.MONGO_URI;
     delete process.env.MONGODB_URI;
+    
+    // Setup mocks
+    jest.spyOn(fs, 'readFileSync').mockReturnValue('[]');
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+    jest.spyOn(path, 'join').mockReturnValue('/mock/path/data/full-address.json');
+    jest.spyOn(path, 'resolve').mockReturnValue('/mock/path');
+    jest.spyOn(dotenv, 'config').mockReturnValue({});
+    jest.spyOn(mongoose, 'connect').mockResolvedValue({ connection: { host: 'localhost' } });
+    jest.spyOn(mongoose, 'disconnect').mockResolvedValue();
   });
 
   afterEach(() => {
@@ -48,12 +46,12 @@ describe("📥 Import Units Script Tests", () => {
   });
 
   describe("Script Execution", () => {
-    test("should execute importUnits function", () => {
+    test("should execute importUnits function", async () => {
       // Arrange
       mockImportUnits.mockResolvedValue();
 
       // Act
-      const result = mockImportUnits();
+      const result = await mockImportUnits();
 
       // Assert
       expect(mockImportUnits).toHaveBeenCalled();
