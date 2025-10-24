@@ -94,5 +94,93 @@
       "updatedAt": "2025-10-24T03:51:18.411Z",
       "history": []
     }
+  },
+  {
+    "action": "deleted",
+    "deletedAt": "2025-10-24T07:04:16.817Z",
+    "deletedBy": "system",
+    "data": {
+      "name": "Phường Ba ADU",
+      "code": "00006",
+      "englishName": "",
+      "administrativeLevel": "Xã",
+      "provinceCode": "01",
+      "provinceName": null,
+      "decree": "",
+      "level": "commune",
+      "parentCode": "01",
+      "boundary": null,
+      "createdAt": "2025-10-24T07:02:42.873Z",
+      "updatedAt": "2025-10-24T07:04:07.028Z",
+      "history": []
+    }
+  },
+  {
+    "action": "deleted",
+    "deletedAt": "2025-10-24T07:30:20.194Z",
+    "deletedBy": "system",
+    "data": {
+      "name": "Phường Ba BA",
+      "code": "00005",
+      "englishName": "",
+      "administrativeLevel": "Xã",
+      "provinceCode": null,
+      "provinceName": null,
+      "decree": "",
+      "level": "commune",
+      "parentCode": null,
+      "boundary": null,
+      "createdAt": "2025-10-24T07:28:01.142Z",
+      "updatedAt": "2025-10-24T07:29:45.289Z",
+      "history": []
+    }
+  },
+  {
+    "action": "deleted",
+    "deletedAt": "2025-10-24T07:33:22.725Z",
+    "deletedBy": "system",
+    "data": {
+      "name": "Phường Ba BA",
+      "code": "00005",
+      "englishName": "",
+      "administrativeLevel": "Xã",
+      "provinceCode": null,
+      "provinceName": null,
+      "decree": "",
+      "level": "commune",
+      "parentCode": null,
+      "boundary": null,
+      "createdAt": "2025-10-24T07:28:01.142Z",
+      "updatedAt": "2025-10-24T07:33:07.678Z",
+      "history": [
+        {
+          "code": "00005",
+          "action": "delete",
+          "oldData": {
+            "name": "Phường Ba BA",
+            "code": "00005",
+            "englishName": "",
+            "administrativeLevel": "Xã",
+            "provinceCode": null,
+            "provinceName": null,
+            "decree": "",
+            "level": "commune",
+            "parentCode": null,
+            "boundary": null,
+            "createdAt": "2025-10-24T07:28:01.142Z",
+            "updatedAt": "2025-10-24T07:29:45.289Z",
+            "history": []
+          },
+          "newData": null,
+          "deleted": true,
+          "changedAt": "2025-10-24T07:30:20.188Z",
+          "changedBy": "system",
+          "_id": "68fb2b0c4e1ec00e15b5ffd6",
+          "createdAt": "2025-10-24T07:30:20.190Z",
+          "updatedAt": "2025-10-24T07:30:20.190Z",
+          "__v": 0
+        }
+      ]
+    }
   }
 ]

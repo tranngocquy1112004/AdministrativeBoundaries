@@ -18,8 +18,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Import test routes
-import unitsRoutes from "./testRoutes.js";
+// Import routes
+import unitsRoutes from "../../server/routes/units.js";
 import searchRoutes from "../../server/routes/search.js";
 import treeRoutes from "../../server/routes/tree.js";
 import { notFoundHandler, errorHandler } from "../../server/middleware/errorHandler.js";
@@ -113,37 +113,32 @@ describe("⚡ Bulk Insert Performance Tests", () => {
     test("should handle mixed level units efficiently", async () => {
       // Arrange
       const timestamp = Date.now();
-      
-      // Tạo province trước
-      const province = {
-        name: "Tỉnh 1",
-        code: `${timestamp}01`,
-        level: "province",
-        parentCode: null
-      };
-      
-      // Tạo commune sau khi province đã tồn tại
-      const commune = {
-        name: "Xã 1-1",
-        code: `${timestamp}0101`,
-        level: "commune",
-        parentCode: `${timestamp}01`,
-        provinceCode: `${timestamp}01`,
-        provinceName: "Tỉnh 1"
-      };
+      const units = [
+        {
+          name: "Tỉnh 1",
+          code: `${timestamp}01`,
+          level: "province",
+          parentCode: null
+        },
+        {
+          name: "Xã 1-1",
+          code: `${timestamp}0101`,
+          level: "commune",
+          parentCode: `${timestamp}01`,
+          provinceCode: `${timestamp}01`,
+          provinceName: "Tỉnh 1"
+        }
+      ];
 
       // Act
       const startTime = Date.now();
       
-      // Tạo province trước
-      const provinceResponse = await request(app).post("/units").send(province);
+      // Create province first
+      const provinceResponse = await request(app).post("/units").send(units[0]);
       expect(provinceResponse.status).toBe(201);
       
-      // Tạo commune sau
-      const communeResponse = await request(app).post("/units").send(commune);
-      if (communeResponse.status !== 201) {
-        console.log("Error response:", communeResponse.body);
-      }
+      // Then create commune
+      const communeResponse = await request(app).post("/units").send(units[1]);
       expect(communeResponse.status).toBe(201);
       
       const endTime = Date.now();
@@ -304,6 +299,9 @@ describe("⚡ Bulk Insert Performance Tests", () => {
       // Delete units
       for (const unit of units) {
         const deleteResponse = await request(app).delete(`/units/${unit.code}`);
+        if (deleteResponse.status !== 200) {
+          console.log("Delete error:", deleteResponse.body);
+        }
         expect(deleteResponse.status).toBe(200);
       }
       
@@ -402,6 +400,9 @@ describe("⚡ Bulk Insert Performance Tests", () => {
       // Perform bulk updates
       for (const unit of units) {
         const updateResponse = await request(app).put(`/units/${unit.code}`).send({ name: `${unit.name} Updated` });
+        if (updateResponse.status !== 200) {
+          console.log("Update error:", updateResponse.body);
+        }
         expect(updateResponse.status).toBe(200);
       }
       
@@ -436,6 +437,9 @@ describe("⚡ Bulk Insert Performance Tests", () => {
       // Perform bulk deletes
       for (const unit of units) {
         const deleteResponse = await request(app).delete(`/units/${unit.code}`);
+        if (deleteResponse.status !== 200) {
+          console.log("Delete error:", deleteResponse.body);
+        }
         expect(deleteResponse.status).toBe(200);
       }
       
@@ -555,18 +559,12 @@ describe("⚡ Bulk Insert Performance Tests", () => {
       // Update units
       for (const unit of units) {
         const updateResponse = await request(app).put(`/units/${unit.code}`).send({ name: `${unit.name} Updated` });
-        if (updateResponse.status !== 200) {
-          console.log("Update error response:", updateResponse.body);
-        }
         expect(updateResponse.status).toBe(200);
       }
       
       // Delete units
       for (const unit of units) {
         const deleteResponse = await request(app).delete(`/units/${unit.code}`);
-        if (deleteResponse.status !== 200) {
-          console.log("Delete error response:", deleteResponse.body);
-        }
         expect(deleteResponse.status).toBe(200);
       }
       

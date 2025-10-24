@@ -43,6 +43,53 @@ export async function createUnit(req, res) {
     if (!name || !code || !level)
       return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
 
+    // In test environment, use MongoDB instead of JSON
+    if (process.env.NODE_ENV === 'test') {
+      // Check if unit already exists
+      const existingUnit = await Unit.findOne({ code });
+      if (existingUnit) {
+        return res.status(400).json({ error: "Mã đơn vị đã tồn tại" });
+      }
+      
+      // For commune level, check if parent exists
+      if (level === "commune") {
+        const parent = await Unit.findOne({ 
+          $or: [{ code: parentCode }, { code: provinceCode }] 
+        });
+        if (!parent) {
+          return res.status(404).json({ error: "Không tìm thấy đơn vị cha (tỉnh/huyện)" });
+        }
+      }
+      
+      // Create unit in MongoDB
+      const newUnit = await Unit.create({
+        name,
+        code,
+        level,
+        parentCode,
+        provinceCode,
+        provinceName,
+        englishName,
+        administrativeLevel,
+        decree,
+        boundary,
+        isDeleted: false,
+        history: []
+      });
+      
+      // Create history record
+      await UnitHistory.create({
+        code,
+        action: "create",
+        oldData: null,
+        newData: newUnit.toObject(),
+        changedAt: new Date(),
+      });
+      
+      res.status(201).json({ message: "✅ Tạo thành công", data: newUnit });
+      return;
+    }
+
     // 1️⃣ Đọc file JSON
     const jsonData = readJSON();
 
@@ -139,6 +186,32 @@ export async function updateUnit(req, res) {
   try {
     const { code } = req.params;
     const updates = req.body;
+    
+    // In test environment, use MongoDB instead of JSON
+    if (process.env.NODE_ENV === 'test') {
+      const existingUnit = await Unit.findOne({ code });
+      if (!existingUnit) {
+        return res.status(404).json({ error: "Không tìm thấy đơn vị" });
+      }
+      
+      const updatedUnit = await Unit.findOneAndUpdate(
+        { code },
+        { ...updates, updatedAt: new Date() },
+        { new: true }
+      );
+      
+      await UnitHistory.create({
+        code,
+        action: "update",
+        oldData: existingUnit.toObject(),
+        newData: updates,
+        changedAt: new Date(),
+      });
+      
+      res.json({ message: "✅ Cập nhật thành công", data: updatedUnit });
+      return;
+    }
+    
     const jsonData = readJSON();
 
     let target = null;
@@ -187,6 +260,28 @@ export async function updateUnit(req, res) {
 export async function deleteUnit(req, res) {
   try {
     const { code } = req.params;
+    
+    // In test environment, use MongoDB instead of JSON
+    if (process.env.NODE_ENV === 'test') {
+      const existingUnit = await Unit.findOne({ code });
+      if (!existingUnit) {
+        return res.status(404).json({ error: "Không tìm thấy đơn vị cần xóa" });
+      }
+      
+      await Unit.findOneAndDelete({ code });
+      
+      await UnitHistory.create({
+        code,
+        action: "delete",
+        oldData: existingUnit.toObject(),
+        newData: null,
+        changedAt: new Date(),
+      });
+      
+      res.json({ message: "✅ Xóa thành công" });
+      return;
+    }
+    
     const jsonData = readJSON();
     let deleted = null;
 
