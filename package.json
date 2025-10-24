@@ -7,8 +7,9 @@
     "test": "jest"
   },
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles --forceExit",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage --detectOpenHandles --forceExit",
+    "test:debug": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles --verbose",
     "start": "node server.js",
     "fetch": "node fetcher/index.js",
     "schedule": "node fetcher/schedule.js",

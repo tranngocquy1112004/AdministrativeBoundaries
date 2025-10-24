@@ -2,10 +2,11 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import Unit from "../models/Unit.js";
+import UnitHistory from "../models/UnitHistory.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const filePath = path.join(__dirname, "../data/full-address.json");
+const filePath = path.join(__dirname, "../../data/full-address.json");
 
 export async function getCommunes(req, res) {
   try {
@@ -173,26 +174,30 @@ export async function createCommune(req, res) {
   try {
     console.log("🔄 Create commune request:", req.params, req.body);
     
+    // Lấy communeCode từ params hoặc body
     const { communeCode } = req.params;
-    const { name, englishName, administrativeLevel, decree, parentCode } = req.body;
+    const { name, englishName, administrativeLevel, decree, parentCode, code } = req.body;
+    
+    // Sử dụng communeCode từ params hoặc code từ body
+    const finalCommuneCode = communeCode || code;
 
     // Kiểm tra commune đã tồn tại chưa
-    const existingCommune = await Unit.findOne({ code: communeCode, level: "commune" });
+    const existingCommune = await Unit.findOne({ code: finalCommuneCode, level: "commune" });
     
     if (existingCommune) {
-      console.log(`❌ Commune already exists: ${communeCode}`);
+      console.log(`❌ Commune already exists: ${finalCommuneCode}`);
       return res.status(409).json({ 
         error: "Commune already exists",
         existingCommune: existingCommune 
       });
     }
 
-    console.log(`✅ Creating new commune: ${communeCode} - ${name}`);
+    console.log(`✅ Creating new commune: ${finalCommuneCode} - ${name}`);
 
     // Tạo commune mới
     const newCommune = await Unit.create({
       name: name,
-      code: communeCode,
+      code: finalCommuneCode,
       englishName: englishName || "",
       administrativeLevel: administrativeLevel || "Xã",
       provinceCode: parentCode || null,
@@ -206,7 +211,7 @@ export async function createCommune(req, res) {
       history: []
     });
 
-    console.log(`✅ Created commune: ${communeCode} - ${newCommune.name}`);
+    console.log(`✅ Created commune: ${finalCommuneCode} - ${newCommune.name}`);
     return res.status(201).json({
       success: true,
       message: "Commune created successfully",
@@ -241,11 +246,51 @@ export async function deleteCommune(req, res) {
 
     console.log(`✅ Found commune to delete: ${commune.name} (${commune.code})`);
 
-    // Lưu vào history trước khi xóa
-    const historyEntry = {
+    // 1. Lưu vào unit_histories collection
+    const historyEntry = new UnitHistory({
+      code: commune.code,
+      action: "delete",
+      oldData: {
+        name: commune.name,
+        code: commune.code,
+        englishName: commune.englishName,
+        administrativeLevel: commune.administrativeLevel,
+        provinceCode: commune.provinceCode,
+        provinceName: commune.provinceName,
+        decree: commune.decree,
+        level: commune.level,
+        parentCode: commune.parentCode,
+        boundary: commune.boundary,
+        createdAt: commune.createdAt,
+        updatedAt: commune.updatedAt,
+        history: commune.history
+      },
+      newData: null, // Không có data mới khi xóa
+      deleted: true,
+      changedAt: new Date(),
+      changedBy: "system"
+    });
+    
+    await historyEntry.save();
+    console.log("📝 Saved delete history to unit_histories collection");
+
+    // 2. Lưu vào history.json (backup)
+    const historyPath = path.join(__dirname, "../../data/history.json");
+    let historyData = [];
+    
+    try {
+      const existingHistory = fs.readFileSync(historyPath, "utf8");
+      if (existingHistory.trim()) {
+        historyData = JSON.parse(existingHistory);
+      }
+    } catch (err) {
+      console.log("📝 Creating new history file");
+    }
+    
+    const jsonHistoryEntry = {
       action: "deleted",
       deletedAt: new Date(),
-      deletedBy: "system", // Có thể thêm user info sau
+      deletedBy: "system",
       data: {
         name: commune.name,
         code: commune.code,
@@ -262,8 +307,31 @@ export async function deleteCommune(req, res) {
         history: commune.history
       }
     };
+    
+    historyData.push(jsonHistoryEntry);
+    fs.writeFileSync(historyPath, JSON.stringify(historyData, null, 2));
 
-    // Soft delete commune (đánh dấu isDeleted = true và lưu vào history)
+    // 2. Xóa khỏi full-address.json
+    const fullAddressPath = path.join(__dirname, "../../data/full-address.json");
+    const fullAddressData = JSON.parse(fs.readFileSync(fullAddressPath, "utf8"));
+    
+    // Tìm và xóa commune khỏi full-address.json
+    for (const province of fullAddressData) {
+      if (province.communes) {
+        province.communes = province.communes.filter(c => c.code !== communeCode);
+      }
+      if (province.districts) {
+        for (const district of province.districts) {
+          if (district.communes) {
+            district.communes = district.communes.filter(c => c.code !== communeCode);
+          }
+        }
+      }
+    }
+    
+    fs.writeFileSync(fullAddressPath, JSON.stringify(fullAddressData, null, 2));
+
+    // 3. Soft delete trong MongoDB
     const deletedCommune = await Unit.findOneAndUpdate(
       { code: communeCode, level: "commune" },
       { 
@@ -276,10 +344,10 @@ export async function deleteCommune(req, res) {
       { new: true }
     );
 
-    console.log(`✅ Soft deleted commune: ${communeCode} - ${commune.name}`);
+    console.log(`✅ Deleted commune from all sources: ${communeCode} - ${commune.name}`);
     return res.json({
       success: true,
-      message: "Commune deleted successfully (can be restored)",
+      message: "Commune deleted successfully from all sources",
       deletedCommune: {
         name: deletedCommune.name,
         code: deletedCommune.code,
@@ -320,24 +388,60 @@ export async function restoreCommune(req, res) {
 
     console.log(`✅ Found deleted commune to restore: ${deletedCommune.name} (${deletedCommune.code})`);
 
-    // Lưu restore action vào history
-    const restoreEntry = {
-      action: "restored",
-      restoredAt: new Date(),
-      restoredBy: "system", // Có thể thêm user info sau
-      data: {
-        name: deletedCommune.name,
-        code: deletedCommune.code,
-        restoredFrom: deletedCommune.deletedAt
-      }
-    };
+    // 1. Lưu restore action vào unit_histories collection
+    const restoreHistoryEntry = new UnitHistory({
+      code: deletedCommune.code,
+      action: "restore",
+      oldData: {
+        isDeleted: true,
+        deletedAt: deletedCommune.deletedAt
+      },
+      newData: {
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date()
+      },
+      deleted: false,
+      changedAt: new Date(),
+      changedBy: "system"
+    });
+    
+    await restoreHistoryEntry.save();
+    console.log("📝 Saved restore history to unit_histories collection");
 
-    // Restore commune
+    // 2. Thêm lại vào full-address.json
+    const fullAddressPath = path.join(__dirname, "../../data/full-address.json");
+    const fullAddressData = JSON.parse(fs.readFileSync(fullAddressPath, "utf8"));
+    
+    // Tìm province tương ứng và thêm commune vào
+    const targetProvince = fullAddressData.find(p => p.code === deletedCommune.provinceCode);
+    if (targetProvince) {
+      if (!targetProvince.communes) {
+        targetProvince.communes = [];
+      }
+      
+      // Kiểm tra commune chưa tồn tại
+      const existingCommune = targetProvince.communes.find(c => c.code === deletedCommune.code);
+      if (!existingCommune) {
+        targetProvince.communes.push({
+          code: deletedCommune.code,
+          name: deletedCommune.name,
+          englishName: deletedCommune.englishName,
+          administrativeLevel: deletedCommune.administrativeLevel,
+          provinceCode: deletedCommune.provinceCode,
+          provinceName: deletedCommune.provinceName,
+          decree: deletedCommune.decree
+        });
+        fs.writeFileSync(fullAddressPath, JSON.stringify(fullAddressData, null, 2));
+        console.log("📝 Added commune back to full-address.json");
+      }
+    }
+
+    // 3. Restore commune trong MongoDB
     const restoredCommune = await Unit.findOneAndUpdate(
       { code: communeCode, level: "commune" },
       { 
         $unset: { isDeleted: 1, deletedAt: 1 },
-        $push: { history: restoreEntry },
         $set: { 
           updatedAt: new Date()
         }
@@ -348,7 +452,7 @@ export async function restoreCommune(req, res) {
     console.log(`✅ Restored commune: ${communeCode} - ${restoredCommune.name}`);
     return res.json({
       success: true,
-      message: "Commune restored successfully",
+      message: "Commune restored successfully from all sources",
       restoredCommune: {
         name: restoredCommune.name,
         code: restoredCommune.code,
@@ -370,13 +474,13 @@ export async function getDeletedCommunes(req, res) {
   try {
     console.log("🔄 Get deleted communes request");
 
-    // Lấy tất cả communes đã bị xóa
+    // Lấy tất cả communes đã bị xóa từ MongoDB
     const deletedCommunes = await Unit.find({ 
       level: "commune",
       isDeleted: true 
     }).sort({ deletedAt: -1 });
 
-    console.log(`✅ Found ${deletedCommunes.length} deleted communes`);
+    console.log(`✅ Found ${deletedCommunes.length} deleted communes from MongoDB`);
     return res.json({
       success: true,
       count: deletedCommunes.length,
@@ -393,6 +497,81 @@ export async function getDeletedCommunes(req, res) {
     console.error("❌ Error getting deleted communes:", err);
     return res.status(500).json({ 
       error: "Failed to get deleted communes",
+      details: err.message 
+    });
+  }
+}
+
+export async function getHistoryCommunes(req, res) {
+  try {
+    console.log("🔄 Get history communes request");
+
+    // Đọc từ unit_histories collection
+    const historyEntries = await UnitHistory.find({})
+      .sort({ changedAt: -1 })
+      .lean();
+
+    console.log(`✅ Found ${historyEntries.length} history entries in unit_histories`);
+    return res.json({
+      success: true,
+      count: historyEntries.length,
+      historyEntries: historyEntries.map(entry => ({
+        code: entry.code,
+        action: entry.action,
+        oldData: entry.oldData,
+        newData: entry.newData,
+        deleted: entry.deleted,
+        changedAt: entry.changedAt,
+        changedBy: entry.changedBy
+      }))
+    });
+
+  } catch (err) {
+    console.error("❌ Error getting history communes:", err);
+    return res.status(500).json({ 
+      error: "Failed to get history communes",
+      details: err.message 
+    });
+  }
+}
+
+export async function getHistoryByCode(req, res) {
+  try {
+    console.log("🔄 Get history by code request:", req.params);
+    
+    const { communeCode } = req.params;
+
+    // Lấy history của commune cụ thể
+    const historyEntries = await UnitHistory.find({ code: communeCode })
+      .sort({ changedAt: -1 })
+      .lean();
+
+    if (historyEntries.length === 0) {
+      return res.status(404).json({
+        error: "No history found for this commune",
+        code: communeCode
+      });
+    }
+
+    console.log(`✅ Found ${historyEntries.length} history entries for commune ${communeCode}`);
+    return res.json({
+      success: true,
+      code: communeCode,
+      count: historyEntries.length,
+      historyEntries: historyEntries.map(entry => ({
+        action: entry.action,
+        oldData: entry.oldData,
+        newData: entry.newData,
+        deleted: entry.deleted,
+        changedAt: entry.changedAt,
+        changedBy: entry.changedBy
+      }))
+    });
+
+  } catch (err) {
+    console.error("❌ Error getting history by code:", err);
+    return res.status(500).json({ 
+      error: "Failed to get history by code",
       details: err.message 
     });
   }

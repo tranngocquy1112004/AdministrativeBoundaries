@@ -23,6 +23,10 @@ export default {
   // 🧹 Dọn dẹp mock sau mỗi test
   clearMocks: true,
 
+  // ⏱️ Timeout settings để tránh Jest hanging
+  testTimeout: 30000, // 30 seconds
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
+
   // 💬 Báo cáo coverage (bao phủ code)
   collectCoverage: true,
   collectCoverageFrom: [
@@ -40,5 +44,7 @@ export default {
     "^@utils/(.*)$": "<rootDir>/utils/$1"
   },
 
-  // setupFilesAfterEnv: ["<rootDir>/jest.setup.js"], // nếu cần file setup
+  // 🔧 Global setup và teardown
+  globalSetup: "<rootDir>/jest.global-setup.js",
+  globalTeardown: "<rootDir>/jest.global-teardown.js",
 };

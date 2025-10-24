@@ -7,6 +7,7 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import fs from "fs";
 import { jest } from "@jest/globals";
+import { comprehensiveCleanup } from "../utils/testCleanup.js";
 
 describe("🔄 Full Flow Integration Tests", () => {
   let mongoServer;
@@ -54,8 +55,26 @@ describe("🔄 Full Flow Integration Tests", () => {
 
   afterAll(async () => {
     // Clean up
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    try {
+      // Clear all collections first
+      await Unit.deleteMany({});
+      await UnitHistory.deleteMany({});
+      
+      // Close mongoose connection
+      if (mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect();
+      }
+      
+      // Stop MongoDB memory server
+      if (mongoServer) {
+        await mongoServer.stop();
+      }
+      
+      // Comprehensive cleanup
+      await comprehensiveCleanup();
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
   });
 
   beforeEach(async () => {
@@ -448,10 +467,11 @@ describe("🔄 Full Flow Integration Tests", () => {
 
       const startTime = Date.now();
 
-      // 2. Create all units
-      for (const unit of units) {
-        await request(app).post("/units").send(unit);
-      }
+      // 2. Create all units concurrently
+      const createPromises = units.map(unit => 
+        request(app).post("/units").send(unit)
+      );
+      await Promise.all(createPromises);
 
       const createTime = Date.now();
 

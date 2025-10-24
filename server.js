@@ -8,6 +8,8 @@ import convertRoutes from "./server/routes/convert.js";
 import unitsRoutes from "./server/routes/units.js";
 import searchRoutes from "./server/routes/search.js";
 import treeRoutes from "./server/routes/tree.js";
+// Import error handlers
+import { notFoundHandler, errorHandler } from "./server/middleware/errorHandler.js";
 // Load biến môi trường
 dotenv.config();
 // Kết nối MongoDB
@@ -39,17 +41,11 @@ app.use("/convert", convertRoutes);
 app.use("/search", searchRoutes);
 app.use("/tree", treeRoutes);
 // --- XỬ LÝ LỖI CHUNG ---
-app.use((req, res, next) => {
-  res.status(404).json({
-    error: "❌ Route not found",
-    path: req.originalUrl,
-  });
-});
+// 404 handler must be after all routes
+app.use(notFoundHandler);
 
-app.use((err, req, res, next) => {
-  console.error("🔥 Server Error:", err.stack);
-  res.status(500).json({ error: "Internal Server Error" });
-});
+// Error handler must be last
+app.use(errorHandler);
 
 // --- KHỞI ĐỘNG SERVER ---
 const PORT = process.env.PORT || 3000;

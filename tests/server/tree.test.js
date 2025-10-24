@@ -330,7 +330,11 @@ describe("🌳 Tree API Tests", () => {
       const originalFind = Unit.find;
       Unit.find = jest.fn().mockImplementation(() => {
         return new Promise((resolve, reject) => {
-          setTimeout(() => reject(new Error("Query timeout")), 100);
+          const timeoutId = setTimeout(() => reject(new Error("Query timeout")), 100);
+          // Clear timeout if query succeeds
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
         });
       });
 

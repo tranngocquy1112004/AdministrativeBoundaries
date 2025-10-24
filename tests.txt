@@ -69,3 +69,6 @@ fetcher/schedule.test.js	            Test cron tự động import	             
 integration/fullFlow.test.js	        Test toàn bộ luồng CRUD	                            unitController.js, routes/units.js, Mongo + JSON	                                    Mock DB (mongodb-memory-server)
 integration/syncJsonMongo.test.js	    Test đồng bộ JSON ↔ Mongo	                        unitController.js, utils/file.js	                                                    File data/full-address.json
 performance/bulkInsert.test.js	        Test hiệu năng import hàng loạt	                    scripts/importUnits.js	                                                                10.000 bản ghi mẫu trong mockData.js
+
+** Test phần json sẽ bị thêm data chưa có logic test để sau khi test việc thêm 
+data example thì sau đó sẽ xóa luôn. cần sửa tiếp tục improve

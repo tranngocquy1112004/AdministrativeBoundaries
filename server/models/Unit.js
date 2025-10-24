@@ -13,7 +13,9 @@ const unitSchema = new mongoose.Schema({
   boundary: Object,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  history: Array
+  history: Array,
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: Date
 });
 
 export default mongoose.model("Unit", unitSchema);

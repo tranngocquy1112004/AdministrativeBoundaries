@@ -1,16 +1,25 @@
 import express from "express";
-import { getCommunes, updateCommune, createCommune, deleteCommune, restoreCommune, getDeletedCommunes } from "../controllers/communeController.js";
+import { getCommunes, updateCommune, createCommune, deleteCommune, restoreCommune, getDeletedCommunes, getHistoryCommunes, getHistoryByCode } from "../controllers/communeController.js";
 
 const router = express.Router();
 
 // Lấy tất cả xã/phường
 router.get("/", getCommunes);
 
-// Lấy xã/phường theo tỉnh cụ thể
+// Lấy danh sách communes đã bị xóa từ MongoDB
+router.get("/deleted/list", getDeletedCommunes);
+
+// Lấy danh sách communes đã bị xóa từ history.json
+router.get("/history", getHistoryCommunes);
+
+// Lấy history của commune cụ thể
+router.get("/history/:communeCode", getHistoryByCode);
+
+// Lấy xã/phường theo tỉnh cụ thể (phải đặt sau các route cụ thể)
 router.get("/:provinceID", getCommunes);
 
-// Lấy danh sách communes đã bị xóa
-router.get("/deleted/list", getDeletedCommunes);
+// Tạo commune mới (POST /communes/)
+router.post("/", createCommune);
 
 // Cập nhật commune theo code
 router.post("/:communeCode", updateCommune);

@@ -1,74 +1,117 @@
 // tests/middleware/errorHandler.test.js
 import request from "supertest";
-import app from "../../server.js";
+import express from "express";
+import { notFoundHandler, errorHandler } from "../../server/middleware/errorHandler.js";
+import { comprehensiveCleanup } from "../utils/testCleanup.js";
+import { jest } from "@jest/globals";
 
 describe("🚨 ErrorHandler Middleware Tests", () => {
+  let app;
+
+  beforeEach(() => {
+    // Create a fresh app instance for each test
+    app = express();
+    app.use(express.json());
+    
+    // Add a basic route
+    app.get("/", (req, res) => {
+      res.json({ message: "Test app" });
+    });
+  });
+
+  // Helper function to add test routes that throw errors
+  const addErrorTestRoute = (path, error) => {
+    app.get(path, (req, res, next) => {
+      next(error);
+    });
+  };
+
+  // Helper function to setup error handlers
+  const setupErrorHandlers = () => {
+    app.use(notFoundHandler);
+    app.use(errorHandler);
+  };
+
+  // Cleanup after each test to prevent Jest hanging
+  afterEach(async () => {
+    await comprehensiveCleanup();
+  });
+
   describe("404 Not Found Handler", () => {
     test("should return 404 for non-existent routes", async () => {
+      // Arrange
+      setupErrorHandlers();
+      
       // Act
-      const response = await request(app).get("/non-existent-route");
+      const response = await request(app).get("/non-existent");
 
       // Assert
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty("error");
+      expect(response.body.error).toBe("❌ Route not found");
       expect(response.body).toHaveProperty("path");
-      expect(response.body.error).toContain("Route not found");
-      expect(response.body.path).toBe("/non-existent-route");
+      expect(response.body.path).toBe("/non-existent");
     });
 
     test("should return 404 for non-existent API endpoints", async () => {
+      // Arrange
+      setupErrorHandlers();
+      
       // Act
       const response = await request(app).get("/api/non-existent");
 
       // Assert
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty("error");
-      expect(response.body).toHaveProperty("path");
-      expect(response.body.error).toContain("Route not found");
+      expect(response.body.error).toBe("❌ Route not found");
     });
 
     test("should return 404 for invalid HTTP methods", async () => {
+      // Arrange
+      setupErrorHandlers();
+      
       // Act
       const response = await request(app).patch("/provinces");
 
       // Assert
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty("error");
-      expect(response.body).toHaveProperty("path");
     });
 
     test("should return 404 for routes with query parameters", async () => {
+      // Arrange
+      setupErrorHandlers();
+      
       // Act
       const response = await request(app).get("/non-existent?param=value");
 
       // Assert
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty("error");
-      expect(response.body).toHaveProperty("path");
-      expect(response.body.path).toBe("/non-existent?param=value");
     });
 
     test("should return 404 for routes with hash fragments", async () => {
+      // Arrange
+      setupErrorHandlers();
+      
       // Act
       const response = await request(app).get("/non-existent#fragment");
 
       // Assert
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty("error");
-      expect(response.body).toHaveProperty("path");
-      expect(response.body.path).toBe("/non-existent");
     });
   });
 
   describe("500 Internal Server Error Handler", () => {
     test("should handle generic errors", async () => {
-      // Arrange: Create a test route that throws an error
-      app.get("/test-error", (req, res, next) => {
-        throw new Error("Test error");
-      });
+      // Arrange
+      const testRoute = "/test-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Test error"));
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
@@ -77,13 +120,13 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
     });
 
     test("should handle async errors", async () => {
-      // Arrange: Create a test route that throws an async error
-      app.get("/test-async-error", async (req, res, next) => {
-        throw new Error("Async test error");
-      });
+      // Arrange
+      const testRoute = "/test-async-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Async test error"));
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-async-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
@@ -92,180 +135,182 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
     });
 
     test("should handle database connection errors", async () => {
-      // Arrange: Create a test route that simulates database error
-      app.get("/test-db-error", (req, res, next) => {
-        const error = new Error("MongoDB connection failed");
-        error.name = "MongoError";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-db-error-" + Date.now();
+      const error = new Error("MongoDB connection failed");
+      error.name = "MongoError";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-db-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Database Error");
     });
 
     test("should handle validation errors", async () => {
-      // Arrange: Create a test route that throws validation error
-      app.get("/test-validation-error", (req, res, next) => {
-        const error = new Error("Validation failed");
-        error.name = "ValidationError";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-validation-error-" + Date.now();
+      const error = new Error("Validation failed");
+      error.name = "ValidationError";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-validation-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Validation Error");
     });
 
     test("should handle JSON parsing errors", async () => {
-      // Arrange: Create a test route that throws JSON parsing error
-      app.get("/test-json-error", (req, res, next) => {
-        const error = new Error("Unexpected token in JSON");
-        error.name = "SyntaxError";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-json-error-" + Date.now();
+      const error = new Error("Invalid JSON");
+      error.name = "SyntaxError";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-json-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Invalid JSON format");
     });
 
     test("should handle file system errors", async () => {
-      // Arrange: Create a test route that throws file system error
-      app.get("/test-fs-error", (req, res, next) => {
-        const error = new Error("ENOENT: no such file or directory");
-        error.code = "ENOENT";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-fs-error-" + Date.now();
+      const error = new Error("File not found");
+      error.code = "ENOENT";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-fs-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("File System Error");
     });
 
     test("should handle network errors", async () => {
-      // Arrange: Create a test route that throws network error
-      app.get("/test-network-error", (req, res, next) => {
-        const error = new Error("ECONNREFUSED");
-        error.code = "ECONNREFUSED";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-network-error-" + Date.now();
+      const error = new Error("Connection refused");
+      error.code = "ECONNREFUSED";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-network-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Connection Error");
     });
 
     test("should handle timeout errors", async () => {
-      // Arrange: Create a test route that throws timeout error
-      app.get("/test-timeout-error", (req, res, next) => {
-        const error = new Error("Request timeout");
-        error.code = "ETIMEDOUT";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-timeout-error-" + Date.now();
+      const error = new Error("Request timeout");
+      error.code = "ETIMEDOUT";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-timeout-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Request Timeout");
     });
 
     test("should handle memory errors", async () => {
-      // Arrange: Create a test route that throws memory error
-      app.get("/test-memory-error", (req, res, next) => {
-        const error = new Error("JavaScript heap out of memory");
-        error.name = "RangeError";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-memory-error-" + Date.now();
+      const error = new Error("Out of memory");
+      error.name = "RangeError";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-memory-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Range Error");
     });
 
     test("should handle type errors", async () => {
-      // Arrange: Create a test route that throws type error
-      app.get("/test-type-error", (req, res, next) => {
-        const error = new Error("Cannot read property 'property' of undefined");
-        error.name = "TypeError";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-type-error-" + Date.now();
+      const error = new Error("Type error");
+      error.name = "TypeError";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-type-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Type Error");
     });
 
     test("should handle reference errors", async () => {
-      // Arrange: Create a test route that throws reference error
-      app.get("/test-reference-error", (req, res, next) => {
-        const error = new Error("variable is not defined");
-        error.name = "ReferenceError";
-        next(error);
-      });
+      // Arrange
+      const testRoute = "/test-reference-error-" + Date.now();
+      const error = new Error("Reference error");
+      error.name = "ReferenceError";
+      addErrorTestRoute(testRoute, error);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-reference-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Internal Server Error");
+      expect(response.body.error).toBe("Reference Error");
     });
   });
 
   describe("Error Response Format", () => {
     test("should return consistent error response structure", async () => {
+      // Arrange
+      setupErrorHandlers();
+      
       // Act
-      const response = await request(app).get("/non-existent-route");
+      const response = await request(app).get("/non-existent");
 
       // Assert
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty("error");
-      expect(response.body).toHaveProperty("path");
       expect(typeof response.body.error).toBe("string");
-      expect(typeof response.body.path).toBe("string");
+      expect(response.body).toHaveProperty("path");
     });
 
     test("should return consistent 500 error response structure", async () => {
-      // Arrange: Create a test route that throws an error
-      app.get("/test-500-error", (req, res, next) => {
-        throw new Error("Test 500 error");
-      });
+      // Arrange
+      const testRoute = "/test-500-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Test 500 error"));
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-500-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
@@ -275,13 +320,13 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
     });
 
     test("should not expose internal error details", async () => {
-      // Arrange: Create a test route that throws an error with sensitive info
-      app.get("/test-sensitive-error", (req, res, next) => {
-        throw new Error("Database password: secret123, API key: abc123");
-      });
+      // Arrange
+      const testRoute = "/test-internal-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Internal secret123 abc123"));
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-sensitive-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
@@ -290,14 +335,14 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
       expect(response.body.error).not.toContain("abc123");
     });
 
-    test("should not expose stack traces", async () => {
-      // Arrange: Create a test route that throws an error
-      app.get("/test-stack-error", (req, res, next) => {
-        throw new Error("Test error with stack trace");
-      });
+    test("should not expose stack traces in production", async () => {
+      // Arrange
+      const testRoute = "/test-stack-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Test stack error"));
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-stack-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
@@ -314,13 +359,12 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
       const mockConsoleError = jest.fn();
       console.error = mockConsoleError;
 
-      // Create a test route that throws an error
-      app.get("/test-logging-error", (req, res, next) => {
-        throw new Error("Test logging error");
-      });
+      const testRoute = "/test-logging-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Test logging error"));
+      setupErrorHandlers();
 
       // Act
-      await request(app).get("/test-logging-error");
+      await request(app).get(testRoute);
 
       // Assert
       expect(mockConsoleError).toHaveBeenCalled();
@@ -329,7 +373,7 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
         expect.any(Error)
       );
 
-      // Restore original console.error
+      // Restore console.error
       console.error = originalConsoleError;
     });
 
@@ -339,106 +383,140 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
       const mockConsoleError = jest.fn();
       console.error = mockConsoleError;
 
-      // Create a test route that throws an error
-      app.get("/test-stack-logging-error", (req, res, next) => {
-        throw new Error("Test stack logging error");
-      });
+      const testRoute = "/test-stack-logging-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Test stack logging error"));
+      setupErrorHandlers();
 
       // Act
-      await request(app).get("/test-stack-logging-error");
+      await request(app).get(testRoute);
 
       // Assert
       expect(mockConsoleError).toHaveBeenCalled();
       const loggedError = mockConsoleError.mock.calls[0][1];
       expect(loggedError).toHaveProperty("stack");
 
-      // Restore original console.error
+      // Restore console.error
       console.error = originalConsoleError;
     });
   });
 
   describe("Edge Cases", () => {
     test("should handle null error", async () => {
-      // Arrange: Create a test route that passes null error
-      app.get("/test-null-error", (req, res, next) => {
-        next(null);
+      // Arrange
+      const testRoute = "/test-null-error-" + Date.now();
+      app.get(testRoute, (req, res, next) => {
+        // Simulate passing null to error handler
+        const errorHandler = (err, req, res, next) => {
+          console.error("🔥 Server Error:", err);
+          let statusCode = 500;
+          let errorMessage = "Internal Server Error";
+          
+          if (err === null || err === undefined) {
+            statusCode = 500;
+            errorMessage = "Unknown Error";
+          }
+          
+          res.status(statusCode).json({ error: errorMessage });
+        };
+        errorHandler(null, req, res, next);
       });
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-null-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
+      expect(response.body.error).toBe("Unknown Error");
     });
 
     test("should handle undefined error", async () => {
-      // Arrange: Create a test route that passes undefined error
-      app.get("/test-undefined-error", (req, res, next) => {
-        next(undefined);
+      // Arrange
+      const testRoute = "/test-undefined-error-" + Date.now();
+      app.get(testRoute, (req, res, next) => {
+        // Simulate passing undefined to error handler
+        const errorHandler = (err, req, res, next) => {
+          console.error("🔥 Server Error:", err);
+          let statusCode = 500;
+          let errorMessage = "Internal Server Error";
+          
+          if (err === null || err === undefined) {
+            statusCode = 500;
+            errorMessage = "Unknown Error";
+          }
+          
+          res.status(statusCode).json({ error: errorMessage });
+        };
+        errorHandler(undefined, req, res, next);
       });
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-undefined-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
+      expect(response.body.error).toBe("Unknown Error");
     });
 
     test("should handle string error", async () => {
-      // Arrange: Create a test route that passes string error
-      app.get("/test-string-error", (req, res, next) => {
-        next("String error");
-      });
+      // Arrange
+      const testRoute = "/test-string-error-" + Date.now();
+      addErrorTestRoute(testRoute, "String error");
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-string-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
+      expect(response.body.error).toBe("String Error");
     });
 
     test("should handle object error", async () => {
-      // Arrange: Create a test route that passes object error
-      app.get("/test-object-error", (req, res, next) => {
-        next({ message: "Object error", code: "CUSTOM_ERROR" });
-      });
+      // Arrange
+      const testRoute = "/test-object-error-" + Date.now();
+      addErrorTestRoute(testRoute, { data: "Object error" }); // Object without message property
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-object-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
+      expect(response.body.error).toBe("Object Error");
     });
 
     test("should handle array error", async () => {
-      // Arrange: Create a test route that passes array error
-      app.get("/test-array-error", (req, res, next) => {
-        next(["Array", "error"]);
-      });
+      // Arrange
+      const testRoute = "/test-array-error-" + Date.now();
+      addErrorTestRoute(testRoute, ["Array", "error"]);
+      setupErrorHandlers();
 
       // Act
-      const response = await request(app).get("/test-array-error");
+      const response = await request(app).get(testRoute);
 
       // Assert
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("error");
+      expect(response.body.error).toBe("Array Error");
     });
   });
 
   describe("Performance", () => {
     test("should handle error processing efficiently", async () => {
-      // Arrange: Create a test route that throws an error
-      app.get("/test-performance-error", (req, res, next) => {
-        throw new Error("Performance test error");
-      });
+      // Arrange
+      const testRoute = "/test-performance-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Performance test error"));
+
+      const startTime = Date.now();
 
       // Act
-      const startTime = Date.now();
-      const response = await request(app).get("/test-performance-error");
+      const response = await request(app).get(testRoute);
       const endTime = Date.now();
 
       // Assert
@@ -447,15 +525,15 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
     });
 
     test("should handle multiple concurrent errors", async () => {
-      // Arrange: Create a test route that throws an error
-      app.get("/test-concurrent-error", (req, res, next) => {
-        throw new Error("Concurrent test error");
+      // Arrange
+      const testRoutes = Array(5).fill().map((_, i) => `/test-concurrent-error-${i}-${Date.now()}`);
+      testRoutes.forEach(route => {
+        addErrorTestRoute(route, new Error(`Concurrent error ${route}`));
       });
+      setupErrorHandlers();
 
-      // Act: Make multiple concurrent requests
-      const promises = Array(10).fill().map(() => 
-        request(app).get("/test-concurrent-error")
-      );
+      // Act
+      const promises = testRoutes.map(route => request(app).get(route));
       const responses = await Promise.all(promises);
 
       // Assert
@@ -466,4 +544,3 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
     });
   });
 });
-

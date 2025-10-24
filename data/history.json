@@ -1,0 +1,84 @@
+[
+  {
+    "action": "deleted",
+    "deletedAt": "2025-10-24T03:40:48.147Z",
+    "deletedBy": "system",
+    "data": {
+      "name": "Phường Cần Xóa",
+      "code": "01001300",
+      "level": "commune",
+      "parentCode": "01001",
+      "createdAt": "2025-10-24T03:40:48.104Z",
+      "updatedAt": "2025-10-24T03:40:48.104Z",
+      "history": []
+    }
+  },
+  {
+    "action": "deleted",
+    "deletedAt": "2025-10-24T03:43:42.261Z",
+    "deletedBy": "system",
+    "data": {
+      "name": "Phường Ba ADUVJP",
+      "code": "00005",
+      "englishName": "",
+      "administrativeLevel": "Xã",
+      "provinceCode": "01",
+      "provinceName": null,
+      "decree": "",
+      "level": "commune",
+      "parentCode": "01",
+      "boundary": null,
+      "createdAt": "2025-10-24T03:42:35.651Z",
+      "updatedAt": "2025-10-24T03:42:35.651Z",
+      "history": []
+    }
+  },
+  {
+    "action": "deleted",
+    "deletedAt": "2025-10-24T03:44:51.232Z",
+    "deletedBy": "system",
+    "data": {
+      "name": "Phường Ba ADUVJP",
+      "code": "00005",
+      "englishName": "",
+      "administrativeLevel": "Xã",
+      "provinceCode": "01",
+      "provinceName": null,
+      "decree": "",
+      "level": "commune",
+      "parentCode": "01",
+      "boundary": null,
+      "createdAt": "2025-10-24T03:42:35.651Z",
+      "updatedAt": "2025-10-24T03:44:25.096Z",
+      "history": [
+        {
+          "code": "00005",
+          "action": "delete",
+          "oldData": {
+            "name": "Phường Ba ADUVJP",
+            "code": "00005",
+            "englishName": "",
+            "administrativeLevel": "Xã",
+            "provinceCode": "01",
+            "provinceName": null,
+            "decree": "",
+            "level": "commune",
+            "parentCode": "01",
+            "boundary": null,
+            "createdAt": "2025-10-24T03:42:35.651Z",
+            "updatedAt": "2025-10-24T03:42:35.651Z",
+            "history": []
+          },
+          "newData": null,
+          "deleted": true,
+          "changedAt": "2025-10-24T03:43:42.257Z",
+          "changedBy": "system",
+          "_id": "68faf5ee2edc489bddc2547a",
+          "createdAt": "2025-10-24T03:43:42.258Z",
+          "updatedAt": "2025-10-24T03:43:42.258Z",
+          "__v": 0
+        }
+      ]
+    }
+  }
+]

@@ -1,5 +1,6 @@
 // tests/middleware/validateUnit.test.js
 import validateUnit from "../../server/middleware/validateUnit.js";
+import { jest } from "@jest/globals";
 
 describe("🔍 ValidateUnit Middleware Tests", () => {
   let req, res, next;
@@ -671,7 +672,7 @@ describe("🔍 ValidateUnit Middleware Tests", () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        error: "Invalid or missing 'name' field."
+        error: "Request body is required."
       });
       expect(next).not.toHaveBeenCalled();
     });
@@ -686,7 +687,7 @@ describe("🔍 ValidateUnit Middleware Tests", () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        error: "Invalid or missing 'name' field."
+        error: "Request body is required."
       });
       expect(next).not.toHaveBeenCalled();
     });
