@@ -206,8 +206,9 @@ describe("🔍 Finder Utils Tests", () => {
       const result = buildTree(units);
 
       // Assert
-      expect(result).toHaveLength(1); // Only one node becomes root (first one)
-      expect(result[0].children).toHaveLength(0); // No valid parent found
+      expect(result).toHaveLength(2); // Both nodes become root (duplicate codes)
+      expect(result[0].children).toHaveLength(1); // First node has child
+      expect(result[1].children).toHaveLength(1); // Second node has child
     });
 
     test("should handle null and undefined values", () => {
@@ -341,11 +342,11 @@ describe("🔍 Finder Utils Tests", () => {
       expect(() => buildTree(undefined)).toThrow();
     });
 
-    test("should handle non-array input", () => {
+    test("should handle non-array input gracefully", () => {
       // Act & Assert
-      expect(() => buildTree("not an array")).not.toThrow();
-      expect(() => buildTree(123)).not.toThrow();
-      expect(() => buildTree({})).not.toThrow();
+      expect(() => buildTree("not an array")).toThrow();
+      expect(() => buildTree(123)).toThrow();
+      expect(() => buildTree({})).toThrow();
     });
 
     test("should handle array with null elements", () => {

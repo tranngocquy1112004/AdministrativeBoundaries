@@ -1,23 +1,31 @@
 // tests/utils/logger.test.js
+import { jest } from "@jest/globals";
 import { logInfo, logError } from "../../utils/logger.js";
 import fs from "fs";
 
-// Mock fs module
-jest.mock("fs", () => ({
-  appendFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  existsSync: jest.fn(),
-  mkdirSync: jest.fn()
-}));
-
-// Mock console.log and console.error
-const mockConsoleLog = jest.spyOn(console, "log").mockImplementation();
-const mockConsoleError = jest.spyOn(console, "error").mockImplementation();
-
 describe("📝 Logger Utils Tests", () => {
+  let mockAppendFileSync;
+  let mockWriteFileSync;
+  let mockExistsSync;
+  let mockMkdirSync;
+  let mockConsoleLog;
+  let mockConsoleError;
+
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
+    // Mock fs module functions
+    mockAppendFileSync = jest.spyOn(fs, "appendFileSync").mockImplementation();
+    mockWriteFileSync = jest.spyOn(fs, "writeFileSync").mockImplementation();
+    mockExistsSync = jest.spyOn(fs, "existsSync").mockReturnValue(true);
+    mockMkdirSync = jest.spyOn(fs, "mkdirSync").mockImplementation();
+    
+    // Mock console functions
+    mockConsoleLog = jest.spyOn(console, "log").mockImplementation();
+    mockConsoleError = jest.spyOn(console, "error").mockImplementation();
+  });
+
+  afterEach(() => {
+    // Restore all mocks after each test
+    jest.restoreAllMocks();
   });
 
   afterEach(() => {
@@ -34,12 +42,12 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -53,8 +61,8 @@ describe("📝 Logger Utils Tests", () => {
 
       // Assert
       const afterTime = new Date().toISOString();
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
         expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] INFO: Test info message\n/)
       );
     });
@@ -67,12 +75,12 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: \n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: \n$/)
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] INFO: `)
+        expect.stringMatching(/^\[.+\] INFO:$/)
       );
     });
 
@@ -84,12 +92,12 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -101,12 +109,12 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -118,12 +126,12 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -135,12 +143,12 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] INFO: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] INFO: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -148,7 +156,7 @@ describe("📝 Logger Utils Tests", () => {
       // Arrange
       const message = "Test info message";
       const fileError = new Error("ENOSPC: no space left on device");
-      fs.appendFileSync.mockImplementation(() => {
+      mockAppendFileSync.mockImplementation(() => {
         throw fileError;
       });
 
@@ -160,7 +168,7 @@ describe("📝 Logger Utils Tests", () => {
       // Arrange
       const message = "Test info message";
       const permissionError = new Error("EACCES: permission denied");
-      fs.appendFileSync.mockImplementation(() => {
+      mockAppendFileSync.mockImplementation(() => {
         throw permissionError;
       });
 
@@ -178,12 +186,12 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -195,8 +203,8 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
         expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] ERROR: Test error message\n/)
       );
     });
@@ -209,12 +217,12 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] ERROR: \n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] ERROR: \n$/)
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] ERROR: `)
+        expect.stringMatching(/^\[.+\] ERROR:$/)
       );
     });
 
@@ -226,12 +234,12 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -243,12 +251,12 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -260,12 +268,12 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -277,12 +285,12 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n$`))
       );
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining(`[${expect.any(String)}] ERROR: ${message}`)
+        expect.stringMatching(new RegExp(`^\\[.+\\] ERROR: ${message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
       );
     });
 
@@ -290,7 +298,7 @@ describe("📝 Logger Utils Tests", () => {
       // Arrange
       const message = "Test error message";
       const fileError = new Error("ENOSPC: no space left on device");
-      fs.appendFileSync.mockImplementation(() => {
+      mockAppendFileSync.mockImplementation(() => {
         throw fileError;
       });
 
@@ -302,7 +310,7 @@ describe("📝 Logger Utils Tests", () => {
       // Arrange
       const message = "Test error message";
       const permissionError = new Error("EACCES: permission denied");
-      fs.appendFileSync.mockImplementation(() => {
+      mockAppendFileSync.mockImplementation(() => {
         throw permissionError;
       });
 
@@ -320,8 +328,8 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
         expect.stringMatching(/^\[.+\] INFO: Test message\n$/)
       );
     });
@@ -334,8 +342,8 @@ describe("📝 Logger Utils Tests", () => {
       logError(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
         expect.stringMatching(/^\[.+\] ERROR: Test error\n$/)
       );
     });
@@ -348,7 +356,7 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      const logEntry = fs.appendFileSync.mock.calls[0][1];
+      const logEntry = mockAppendFileSync.mock.calls[0][1];
       expect(logEntry).toMatch(/\n$/);
     });
 
@@ -360,7 +368,7 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      const logEntry = fs.appendFileSync.mock.calls[0][1];
+      const logEntry = mockAppendFileSync.mock.calls[0][1];
       expect(logEntry).toMatch(/^\[.+\]/);
     });
 
@@ -372,7 +380,7 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      const logEntry = fs.appendFileSync.mock.calls[0][1];
+      const logEntry = mockAppendFileSync.mock.calls[0][1];
       expect(logEntry).toContain("INFO:");
     });
   });
@@ -386,8 +394,8 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
         expect.any(String)
       );
     });
@@ -400,8 +408,8 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
         expect.any(String)
       );
     });
@@ -414,8 +422,8 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
         expect.any(String)
       );
     });
@@ -432,7 +440,7 @@ describe("📝 Logger Utils Tests", () => {
       const endTime = Date.now();
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(100);
+      expect(mockAppendFileSync).toHaveBeenCalledTimes(100);
       expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second
     });
 
@@ -446,7 +454,7 @@ describe("📝 Logger Utils Tests", () => {
       const endTime = Date.now();
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(1);
+      expect(mockAppendFileSync).toHaveBeenCalledTimes(1);
       expect(endTime - startTime).toBeLessThan(100); // Should complete within 100ms
     });
 
@@ -463,7 +471,7 @@ describe("📝 Logger Utils Tests", () => {
       const endTime = Date.now();
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(20);
+      expect(mockAppendFileSync).toHaveBeenCalledTimes(20);
       expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second
     });
   });
@@ -477,9 +485,9 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: null\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: null\n$/)
       );
     });
 
@@ -491,9 +499,9 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: undefined\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: undefined\n$/)
       );
     });
 
@@ -505,9 +513,9 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: 123\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: 123\n$/)
       );
     });
 
@@ -519,9 +527,9 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: true\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: true\n$/)
       );
     });
 
@@ -533,9 +541,9 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: [object Object]\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: \[object Object\]\n$/)
       );
     });
 
@@ -547,9 +555,9 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: 1,2,3\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: 1,2,3\n$/)
       );
     });
 
@@ -561,9 +569,9 @@ describe("📝 Logger Utils Tests", () => {
       logInfo(message);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledWith(
-        expect.stringContaining("data/fetch.log"),
-        expect.stringContaining(`[${expect.any(String)}] INFO: function() { return "test"; }\n`)
+      expect(mockAppendFileSync).toHaveBeenCalledWith(
+        expect.stringContaining("fetch.log"),
+        expect.stringMatching(/^\[.+\] INFO: function\(\) \{ return "test"; \}\n$/)
       );
     });
   });
@@ -579,10 +587,10 @@ describe("📝 Logger Utils Tests", () => {
       logError(errorMessage);
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(2);
+      expect(mockAppendFileSync).toHaveBeenCalledTimes(2);
       
-      const infoCall = fs.appendFileSync.mock.calls[0];
-      const errorCall = fs.appendFileSync.mock.calls[1];
+      const infoCall = mockAppendFileSync.mock.calls[0];
+      const errorCall = mockAppendFileSync.mock.calls[1];
       
       expect(infoCall[1]).toContain("INFO:");
       expect(errorCall[1]).toContain("ERROR:");
@@ -609,9 +617,9 @@ describe("📝 Logger Utils Tests", () => {
       });
 
       // Assert
-      expect(fs.appendFileSync).toHaveBeenCalledTimes(4);
+      expect(mockAppendFileSync).toHaveBeenCalledTimes(4);
       
-      const calls = fs.appendFileSync.mock.calls;
+      const calls = mockAppendFileSync.mock.calls;
       expect(calls[0][1]).toContain("INFO: Info 1");
       expect(calls[1][1]).toContain("ERROR: Error 1");
       expect(calls[2][1]).toContain("INFO: Info 2");

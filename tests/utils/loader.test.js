@@ -1,17 +1,21 @@
 // tests/utils/loader.test.js
+import { jest } from "@jest/globals";
 import { loadData } from "../../server/utils/loader.js";
 import fs from "fs";
 
-// Mock fs module
-jest.mock("fs", () => ({
-  readFileSync: jest.fn(),
-  existsSync: jest.fn()
-}));
-
 describe("📂 Loader Utils Tests", () => {
+  let mockReadFileSync;
+  let mockExistsSync;
+
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
+    // Mock fs module functions
+    mockReadFileSync = jest.spyOn(fs, "readFileSync").mockImplementation();
+    mockExistsSync = jest.spyOn(fs, "existsSync").mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    // Restore all mocks after each test
+    jest.restoreAllMocks();
   });
 
   afterEach(() => {
@@ -36,13 +40,13 @@ describe("📂 Loader Utils Tests", () => {
           ]
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
       expect(result).toEqual(mockData);
       expect(Array.isArray(result)).toBe(true);
       expect(result).toHaveLength(1);
@@ -100,7 +104,7 @@ describe("📂 Loader Utils Tests", () => {
           ]
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -118,7 +122,7 @@ describe("📂 Loader Utils Tests", () => {
     test("should load empty array", () => {
       // Arrange
       const mockData = [];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -139,7 +143,7 @@ describe("📂 Loader Utils Tests", () => {
           communes: []
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -168,7 +172,7 @@ describe("📂 Loader Utils Tests", () => {
           ]
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -196,7 +200,7 @@ describe("📂 Loader Utils Tests", () => {
           ]
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -210,7 +214,7 @@ describe("📂 Loader Utils Tests", () => {
     test("should handle file read errors", () => {
       // Arrange
       const fileError = new Error("ENOENT: no such file or directory");
-      fs.readFileSync.mockImplementation(() => {
+      mockReadFileSync.mockImplementation(() => {
         throw fileError;
       });
 
@@ -221,7 +225,7 @@ describe("📂 Loader Utils Tests", () => {
     test("should handle permission errors", () => {
       // Arrange
       const permissionError = new Error("EACCES: permission denied");
-      fs.readFileSync.mockImplementation(() => {
+      mockReadFileSync.mockImplementation(() => {
         throw permissionError;
       });
 
@@ -231,7 +235,7 @@ describe("📂 Loader Utils Tests", () => {
 
     test("should handle invalid JSON data", () => {
       // Arrange
-      fs.readFileSync.mockReturnValue("invalid json data");
+      mockReadFileSync.mockReturnValue("invalid json data");
 
       // Act & Assert
       expect(() => loadData()).toThrow();
@@ -239,7 +243,7 @@ describe("📂 Loader Utils Tests", () => {
 
     test("should handle empty file", () => {
       // Arrange
-      fs.readFileSync.mockReturnValue("");
+      mockReadFileSync.mockReturnValue("");
 
       // Act & Assert
       expect(() => loadData()).toThrow();
@@ -247,7 +251,7 @@ describe("📂 Loader Utils Tests", () => {
 
     test("should handle whitespace-only file", () => {
       // Arrange
-      fs.readFileSync.mockReturnValue("   \n\t   ");
+      mockReadFileSync.mockReturnValue("   \n\t   ");
 
       // Act & Assert
       expect(() => loadData()).toThrow();
@@ -255,7 +259,7 @@ describe("📂 Loader Utils Tests", () => {
 
     test("should handle malformed JSON", () => {
       // Arrange
-      fs.readFileSync.mockReturnValue('{"code": "01", "name": "Hà Nội", "communes": }');
+      mockReadFileSync.mockReturnValue('{"code": "01", "name": "Hà Nội", "communes": }');
 
       // Act & Assert
       expect(() => loadData()).toThrow();
@@ -263,7 +267,7 @@ describe("📂 Loader Utils Tests", () => {
 
     test("should handle JSON with trailing comma", () => {
       // Arrange
-      fs.readFileSync.mockReturnValue('{"code": "01", "name": "Hà Nội", "communes": [],}');
+      mockReadFileSync.mockReturnValue('{"code": "01", "name": "Hà Nội", "communes": [],}');
 
       // Act & Assert
       expect(() => loadData()).toThrow();
@@ -293,7 +297,7 @@ describe("📂 Loader Utils Tests", () => {
         largeData.push(province);
       }
       
-      fs.readFileSync.mockReturnValue(JSON.stringify(largeData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(largeData));
 
       // Act
       const result = loadData();
@@ -326,7 +330,7 @@ describe("📂 Loader Utils Tests", () => {
           ]
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -351,7 +355,7 @@ describe("📂 Loader Utils Tests", () => {
           communes: []
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -390,7 +394,7 @@ describe("📂 Loader Utils Tests", () => {
           ]
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -434,7 +438,7 @@ describe("📂 Loader Utils Tests", () => {
           ]
         }
       ];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       const result = loadData();
@@ -453,37 +457,37 @@ describe("📂 Loader Utils Tests", () => {
     test("should use correct file path", () => {
       // Arrange
       const mockData = [{ code: "01", name: "Hà Nội" }];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       loadData();
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
     });
 
     test("should handle file path with spaces", () => {
       // Arrange
       const mockData = [{ code: "01", name: "Hà Nội" }];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       loadData();
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
     });
 
     test("should handle file path with special characters", () => {
       // Arrange
       const mockData = [{ code: "01", name: "Hà Nội" }];
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockData));
 
       // Act
       loadData();
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith("./data/full-address.json", "utf8");
     });
   });
 
@@ -506,7 +510,7 @@ describe("📂 Loader Utils Tests", () => {
         });
       }
       
-      fs.readFileSync.mockReturnValue(JSON.stringify(largeData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(largeData));
 
       // Act
       const startTime = Date.now();
@@ -552,7 +556,7 @@ describe("📂 Loader Utils Tests", () => {
         }
       };
       
-      fs.readFileSync.mockReturnValue(JSON.stringify(deepData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(deepData));
 
       // Act
       const startTime = Date.now();

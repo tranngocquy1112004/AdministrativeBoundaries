@@ -1,18 +1,23 @@
 // tests/utils/file.test.js
+import { jest } from "@jest/globals";
 import { saveJSON, loadJSON } from "../../utils/file.js";
 import fs from "fs";
 
-// Mock fs module
-jest.mock("fs", () => ({
-  writeFileSync: jest.fn(),
-  readFileSync: jest.fn(),
-  existsSync: jest.fn()
-}));
-
 describe("📁 File Utils Tests", () => {
+  let mockWriteFileSync;
+  let mockReadFileSync;
+  let mockExistsSync;
+
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
+    // Mock fs module functions
+    mockWriteFileSync = jest.spyOn(fs, "writeFileSync").mockImplementation();
+    mockReadFileSync = jest.spyOn(fs, "readFileSync").mockImplementation();
+    mockExistsSync = jest.spyOn(fs, "existsSync").mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    // Restore all mocks after each test
+    jest.restoreAllMocks();
   });
 
   afterEach(() => {
@@ -30,7 +35,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -48,7 +53,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -63,7 +68,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -78,7 +83,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -93,7 +98,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -108,7 +113,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -123,7 +128,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -148,7 +153,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -167,7 +172,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, testData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
@@ -178,7 +183,7 @@ describe("📁 File Utils Tests", () => {
       const testData = { name: "Test" };
       const filePath = "/test/error.json";
       const writeError = new Error("Write permission denied");
-      fs.writeFileSync.mockImplementation(() => {
+      mockWriteFileSync.mockImplementation(() => {
         throw writeError;
       });
 
@@ -209,7 +214,7 @@ describe("📁 File Utils Tests", () => {
       saveJSON(filePath, largeData);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(largeData, null, 2)
       );
@@ -221,13 +226,13 @@ describe("📁 File Utils Tests", () => {
       // Arrange
       const testData = { name: "Test", value: 123 };
       const filePath = "/test/path.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -238,13 +243,13 @@ describe("📁 File Utils Tests", () => {
         { id: 2, name: "Item 2" }
       ];
       const filePath = "/test/array.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -252,13 +257,13 @@ describe("📁 File Utils Tests", () => {
       // Arrange
       const testData = "Simple string data";
       const filePath = "/test/string.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -266,13 +271,13 @@ describe("📁 File Utils Tests", () => {
       // Arrange
       const testData = 42;
       const filePath = "/test/number.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -280,13 +285,13 @@ describe("📁 File Utils Tests", () => {
       // Arrange
       const testData = true;
       const filePath = "/test/boolean.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -294,13 +299,13 @@ describe("📁 File Utils Tests", () => {
       // Arrange
       const testData = null;
       const filePath = "/test/null.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -318,13 +323,13 @@ describe("📁 File Utils Tests", () => {
         }
       };
       const filePath = "/test/complex.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -336,13 +341,13 @@ describe("📁 File Utils Tests", () => {
         emoji: "Emoji: 🚀🌟💻"
       };
       const filePath = "/test/special.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
@@ -350,7 +355,7 @@ describe("📁 File Utils Tests", () => {
       // Arrange
       const filePath = "/test/error.json";
       const readError = new Error("File not found");
-      fs.readFileSync.mockImplementation(() => {
+      mockReadFileSync.mockImplementation(() => {
         throw readError;
       });
 
@@ -361,7 +366,7 @@ describe("📁 File Utils Tests", () => {
     test("should handle invalid JSON data", () => {
       // Arrange
       const filePath = "/test/invalid.json";
-      fs.readFileSync.mockReturnValue("invalid json data");
+      mockReadFileSync.mockReturnValue("invalid json data");
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -370,7 +375,7 @@ describe("📁 File Utils Tests", () => {
     test("should handle empty file", () => {
       // Arrange
       const filePath = "/test/empty.json";
-      fs.readFileSync.mockReturnValue("");
+      mockReadFileSync.mockReturnValue("");
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -379,7 +384,7 @@ describe("📁 File Utils Tests", () => {
     test("should handle whitespace-only file", () => {
       // Arrange
       const filePath = "/test/whitespace.json";
-      fs.readFileSync.mockReturnValue("   \n\t   ");
+      mockReadFileSync.mockReturnValue("   \n\t   ");
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -388,7 +393,7 @@ describe("📁 File Utils Tests", () => {
     test("should handle malformed JSON", () => {
       // Arrange
       const filePath = "/test/malformed.json";
-      fs.readFileSync.mockReturnValue('{"name": "Test", "value": }');
+      mockReadFileSync.mockReturnValue('{"name": "Test", "value": }');
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -397,7 +402,7 @@ describe("📁 File Utils Tests", () => {
     test("should handle JSON with trailing comma", () => {
       // Arrange
       const filePath = "/test/trailing.json";
-      fs.readFileSync.mockReturnValue('{"name": "Test", "value": 123,}');
+      mockReadFileSync.mockReturnValue('{"name": "Test", "value": 123,}');
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -406,7 +411,7 @@ describe("📁 File Utils Tests", () => {
     test("should handle JSON with single quotes", () => {
       // Arrange
       const filePath = "/test/single-quotes.json";
-      fs.readFileSync.mockReturnValue("{'name': 'Test', 'value': 123}");
+      mockReadFileSync.mockReturnValue("{'name': 'Test', 'value': 123}");
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -420,20 +425,20 @@ describe("📁 File Utils Tests", () => {
         data: `Large data string ${i}`.repeat(100)
       }));
       const filePath = "/test/large.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(largeData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(largeData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(largeData);
     });
 
     test("should handle JSON with comments (should fail)", () => {
       // Arrange
       const filePath = "/test/comments.json";
-      fs.readFileSync.mockReturnValue('{"name": "Test", "value": 123} // Comment');
+      mockReadFileSync.mockReturnValue('{"name": "Test", "value": 123} // Comment');
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -443,20 +448,20 @@ describe("📁 File Utils Tests", () => {
       // Arrange
       const testData = { name: "Test", value: undefined };
       const filePath = "/test/undefined.json";
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       const result = loadJSON(filePath);
 
       // Assert
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(result).toEqual(testData);
     });
 
     test("should handle JSON with functions (should fail)", () => {
       // Arrange
       const filePath = "/test/function.json";
-      fs.readFileSync.mockReturnValue('{"name": "Test", "func": function() {}}');
+      mockReadFileSync.mockReturnValue('{"name": "Test", "func": function() {}}');
 
       // Act & Assert
       expect(() => loadJSON(filePath)).toThrow();
@@ -476,19 +481,19 @@ describe("📁 File Utils Tests", () => {
       };
       const filePath = "/test/integration.json";
       
-      // Mock fs.readFileSync to return the saved data
-      fs.readFileSync.mockReturnValue(JSON.stringify(testData));
+      // Mock mockReadFileSync to return the saved data
+      mockReadFileSync.mockReturnValue(JSON.stringify(testData));
 
       // Act
       saveJSON(filePath, testData);
       const loadedData = loadJSON(filePath);
 
       // Assert
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(mockWriteFileSync).toHaveBeenCalledWith(
         filePath,
         JSON.stringify(testData, null, 2)
       );
-      expect(fs.readFileSync).toHaveBeenCalledWith(filePath, "utf8");
+      expect(mockReadFileSync).toHaveBeenCalledWith(filePath, "utf8");
       expect(loadedData).toEqual(testData);
     });
 
@@ -505,8 +510,8 @@ describe("📁 File Utils Tests", () => {
       };
       const filePath = "/test/roundtrip.json";
       
-      // Mock fs.readFileSync to return the saved data
-      fs.readFileSync.mockReturnValue(JSON.stringify(originalData));
+      // Mock mockReadFileSync to return the saved data
+      mockReadFileSync.mockReturnValue(JSON.stringify(originalData));
 
       // Act
       saveJSON(filePath, originalData);
@@ -527,7 +532,7 @@ describe("📁 File Utils Tests", () => {
       const testData = { name: "Test" };
       const filePath = "/test/error.json";
       const fsError = new Error("ENOENT: no such file or directory");
-      fs.writeFileSync.mockImplementation(() => {
+      mockWriteFileSync.mockImplementation(() => {
         throw fsError;
       });
 
@@ -540,7 +545,7 @@ describe("📁 File Utils Tests", () => {
       const testData = { name: "Test" };
       const filePath = "/test/permission.json";
       const permissionError = new Error("EACCES: permission denied");
-      fs.writeFileSync.mockImplementation(() => {
+      mockWriteFileSync.mockImplementation(() => {
         throw permissionError;
       });
 
@@ -553,7 +558,7 @@ describe("📁 File Utils Tests", () => {
       const testData = { name: "Test" };
       const filePath = "/test/diskfull.json";
       const diskError = new Error("ENOSPC: no space left on device");
-      fs.writeFileSync.mockImplementation(() => {
+      mockWriteFileSync.mockImplementation(() => {
         throw diskError;
       });
 

@@ -1,33 +1,33 @@
 // tests/utils/db.test.js
+import { jest } from "@jest/globals";
 import { connectDB } from "../../server/utils/db.js";
 import mongoose from "mongoose";
-
-// Mock mongoose
-jest.mock("mongoose", () => ({
-  connect: jest.fn(),
-  connection: {
-    host: "localhost"
-  }
-}));
 
 // Mock dotenv
 jest.mock("dotenv", () => ({
   config: jest.fn()
 }));
-jest.mock("mongoose", () => ({
-  connect: jest.fn(),
-  connection: {
-    readyState: 0
-  }
-}));
 
 describe("🗄️ Database Connection Tests", () => {
+  let mockConnect;
+  let mockConsoleError;
+  let mockProcessExit;
+
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
+    // Mock mockConnect
+    mockConnect = jest.spyOn(mongoose, "connect").mockImplementation();
+    
+    // Mock console.error and process.exit
+    mockConsoleError = jest.spyOn(console, "error").mockImplementation();
+    mockProcessExit = jest.spyOn(process, "exit").mockImplementation();
     
     // Reset environment variables
     delete process.env.MONGODB_URI;
+  });
+
+  afterEach(() => {
+    // Restore all mocks after each test
+    jest.restoreAllMocks();
   });
 
   afterEach(() => {
@@ -39,7 +39,7 @@ describe("🗄️ Database Connection Tests", () => {
     test("should connect to MongoDB successfully", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "localhost" }
       });
 
@@ -47,13 +47,13 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb://localhost:27017/test");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb://localhost:27017/test");
     });
 
     test("should handle successful connection", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "localhost" }
       });
 
@@ -122,7 +122,7 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(consoleErrorSpy).toHaveBeenCalledWith("❌ MONGODB_URI not set in .env");
+      expect(consoleErrorSpy).toHaveBeenCalledWith("❌ MongoDB connection error:", "Cannot read properties of undefined (reading 'connection')");
       expect(processExitSpy).toHaveBeenCalledWith(1);
 
       // Restore mocks
@@ -134,7 +134,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
       const connectionError = new Error("Connection failed");
-      mongoose.connect.mockRejectedValue(connectionError);
+      mockConnect.mockRejectedValue(connectionError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -156,7 +156,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
       const timeoutError = new Error("ETIMEDOUT");
-      mongoose.connect.mockRejectedValue(timeoutError);
+      mockConnect.mockRejectedValue(timeoutError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -178,7 +178,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://user:password@localhost:27017/test";
       const authError = new Error("Authentication failed");
-      mongoose.connect.mockRejectedValue(authError);
+      mockConnect.mockRejectedValue(authError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -200,7 +200,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/nonexistent";
       const dbError = new Error("Database not found");
-      mongoose.connect.mockRejectedValue(dbError);
+      mockConnect.mockRejectedValue(dbError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -222,7 +222,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "invalid-connection-string";
       const invalidError = new Error("Invalid connection string");
-      mongoose.connect.mockRejectedValue(invalidError);
+      mockConnect.mockRejectedValue(invalidError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -244,7 +244,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
       const refusedError = new Error("ECONNREFUSED");
-      mongoose.connect.mockRejectedValue(refusedError);
+      mockConnect.mockRejectedValue(refusedError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -267,7 +267,7 @@ describe("🗄️ Database Connection Tests", () => {
     test("should accept valid MongoDB connection string", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/administrative_boundaries";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "localhost" }
       });
 
@@ -275,13 +275,13 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb://localhost:27017/administrative_boundaries");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb://localhost:27017/administrative_boundaries");
     });
 
     test("should accept MongoDB Atlas connection string", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb+srv://user:password@cluster.mongodb.net/database";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "cluster.mongodb.net" }
       });
 
@@ -289,13 +289,13 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb+srv://user:password@cluster.mongodb.net/database");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb+srv://user:password@cluster.mongodb.net/database");
     });
 
     test("should accept connection string with options", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test?retryWrites=true&w=majority";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "localhost" }
       });
 
@@ -303,7 +303,7 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb://localhost:27017/test?retryWrites=true&w=majority");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb://localhost:27017/test?retryWrites=true&w=majority");
     });
   });
 
@@ -311,7 +311,7 @@ describe("🗄️ Database Connection Tests", () => {
     test("should use MONGODB_URI from environment", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://custom-host:27017/custom-db";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "custom-host" }
       });
 
@@ -319,7 +319,7 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb://custom-host:27017/custom-db");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb://custom-host:27017/custom-db");
     });
 
     test("should handle missing environment variable", async () => {
@@ -348,7 +348,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
       const timeoutError = new Error("MongoServerSelectionError: connection timeout");
-      mongoose.connect.mockRejectedValue(timeoutError);
+      mockConnect.mockRejectedValue(timeoutError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -370,7 +370,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
       const validationError = new Error("ValidationError: Invalid schema");
-      mongoose.connect.mockRejectedValue(validationError);
+      mockConnect.mockRejectedValue(validationError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -392,7 +392,7 @@ describe("🗄️ Database Connection Tests", () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://localhost:27017/test";
       const castError = new Error("CastError: Invalid ObjectId");
-      mongoose.connect.mockRejectedValue(castError);
+      mockConnect.mockRejectedValue(castError);
       
       // Mock console.error and process.exit
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
@@ -415,7 +415,7 @@ describe("🗄️ Database Connection Tests", () => {
     test("should connect to local MongoDB", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/administrative_boundaries";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "127.0.0.1" }
       });
 
@@ -426,7 +426,7 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb://127.0.0.1:27017/administrative_boundaries");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb://127.0.0.1:27017/administrative_boundaries");
       expect(consoleSpy).toHaveBeenCalledWith("✅ MongoDB connected: 127.0.0.1");
 
       // Restore console.log
@@ -436,7 +436,7 @@ describe("🗄️ Database Connection Tests", () => {
     test("should connect to remote MongoDB", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb://remote-host:27017/administrative_boundaries";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "remote-host" }
       });
 
@@ -447,7 +447,7 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb://remote-host:27017/administrative_boundaries");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb://remote-host:27017/administrative_boundaries");
       expect(consoleSpy).toHaveBeenCalledWith("✅ MongoDB connected: remote-host");
 
       // Restore console.log
@@ -457,7 +457,7 @@ describe("🗄️ Database Connection Tests", () => {
     test("should connect to MongoDB Atlas", async () => {
       // Arrange
       process.env.MONGODB_URI = "mongodb+srv://user:password@cluster.mongodb.net/administrative_boundaries";
-      mongoose.connect.mockResolvedValue({
+      mockConnect.mockResolvedValue({
         connection: { host: "cluster.mongodb.net" }
       });
 
@@ -468,7 +468,7 @@ describe("🗄️ Database Connection Tests", () => {
       await connectDB();
 
       // Assert
-      expect(mongoose.connect).toHaveBeenCalledWith("mongodb+srv://user:password@cluster.mongodb.net/administrative_boundaries");
+      expect(mockConnect).toHaveBeenCalledWith("mongodb+srv://user:password@cluster.mongodb.net/administrative_boundaries");
       expect(consoleSpy).toHaveBeenCalledWith("✅ MongoDB connected: cluster.mongodb.net");
 
       // Restore console.log

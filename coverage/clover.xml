@@ -1,10 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1761292220169" clover="3.2.0">
-  <project timestamp="1761292220169" name="All files">
-    <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0" elements="1" coveredelements="1" complexity="0" loc="1" ncloc="1" packages="1" files="1" classes="1"/>
-    <file name="Unit.js" path="C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\server\models\Unit.js">
-      <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
-      <line num="3" count="1" type="stmt"/>
-    </file>
+<coverage generated="1761299313130" clover="3.2.0">
+  <project timestamp="1761299313130" name="All files">
+    <metrics statements="32" coveredstatements="32" conditionals="8" coveredconditionals="8" methods="8" coveredmethods="8" elements="48" coveredelements="48" complexity="0" loc="32" ncloc="32" packages="2" files="5" classes="5"/>
+    <package name="server.utils">
+      <metrics statements="23" coveredstatements="23" conditionals="8" coveredconditionals="8" methods="3" coveredmethods="3"/>
+      <file name="db.js" path="C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\server\utils\db.js">
+        <metrics statements="10" coveredstatements="10" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="9" count="22" type="stmt"/>
+        <line num="11" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="12" count="3" type="stmt"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="16" count="22" type="stmt"/>
+        <line num="17" count="22" type="stmt"/>
+        <line num="18" count="13" type="stmt"/>
+        <line num="20" count="13" type="stmt"/>
+        <line num="21" count="13" type="stmt"/>
+      </file>
+      <file name="finder.js" path="C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\server\utils\finder.js">
+        <metrics statements="11" coveredstatements="11" conditionals="6" coveredconditionals="6" methods="1" coveredmethods="1"/>
+        <line num="8" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="9" count="5" type="stmt"/>
+        <line num="12" count="19" type="stmt"/>
+        <line num="13" count="19" type="stmt"/>
+        <line num="16" count="19" type="stmt"/>
+        <line num="17" count="1147" type="stmt"/>
+        <line num="21" count="17" type="stmt"/>
+        <line num="22" count="1143" type="cond" truecount="4" falsecount="0"/>
+        <line num="23" count="1025" type="stmt"/>
+        <line num="26" count="118" type="stmt"/>
+        <line num="30" count="17" type="stmt"/>
+      </file>
+      <file name="loader.js" path="C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\server\utils\loader.js">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="4" count="23" type="stmt"/>
+        <line num="5" count="21" type="stmt"/>
+      </file>
+    </package>
+    <package name="utils">
+      <metrics statements="9" coveredstatements="9" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
+      <file name="file.js" path="C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\utils\file.js">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="4" count="17" type="stmt"/>
+        <line num="8" count="21" type="stmt"/>
+      </file>
+      <file name="logger.js" path="C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\utils\logger.js">
+        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="3"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="7" count="160" type="stmt"/>
+        <line num="8" count="160" type="stmt"/>
+        <line num="9" count="160" type="stmt"/>
+        <line num="10" count="156" type="stmt"/>
+        <line num="13" count="137" type="stmt"/>
+        <line num="14" count="23" type="stmt"/>
+      </file>
+    </package>
   </project>
 </coverage>

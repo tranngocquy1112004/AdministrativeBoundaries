@@ -4,6 +4,11 @@
  * @returns {Array} cây phân cấp hành chính (province → district → commune)
  */
 export function buildTree(units) {
+  // Validate input
+  if (!Array.isArray(units)) {
+    throw new Error("Input must be an array");
+  }
+
   const map = {}; // Lưu tạm các đơn vị để truy cập nhanh
   const roots = []; // Danh sách các cấp cao nhất (tỉnh)
 

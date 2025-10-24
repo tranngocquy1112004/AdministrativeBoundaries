@@ -1,4 +1,5 @@
 // tests/server/search.test.js
+import { jest } from "@jest/globals";
 import request from "supertest";
 import app from "../../server.js";
 import Unit from "../../server/models/Unit.js";
@@ -204,8 +205,9 @@ describe("🔍 Search API Tests", () => {
   describe("Error Handling", () => {
     test("should handle MongoDB connection error", async () => {
       // Arrange: Mock MongoDB error
-      const originalFind = Unit.find;
-      Unit.find = jest.fn().mockRejectedValue(new Error("MongoDB connection failed"));
+      const findSpy = jest.spyOn(Unit, 'find').mockImplementation(() => {
+        throw new Error("MongoDB connection failed");
+      });
 
       // Act
       const response = await request(app).get("/search?name=Test");
@@ -215,7 +217,7 @@ describe("🔍 Search API Tests", () => {
       expect(response.body).toHaveProperty("error");
 
       // Restore original function
-      Unit.find = originalFind;
+      findSpy.mockRestore();
     });
 
     test("should handle invalid query parameters", async () => {
