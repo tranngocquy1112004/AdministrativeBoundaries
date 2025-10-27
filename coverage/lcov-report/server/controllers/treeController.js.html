@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for server/utils/db.js</title>
+    <title>Code coverage report for server/controllers/treeController.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,20 +19,20 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">server/utils</a> db.js</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">server/controllers</a> treeController.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -86,50 +86,68 @@
 <a name='L21'></a><a href='#L21'>21</a>
 <a name='L22'></a><a href='#L22'>22</a>
 <a name='L23'></a><a href='#L23'>23</a>
-<a name='L24'></a><a href='#L24'>24</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">33x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">33x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">33x</span>
-<span class="cline-any cline-yes">33x</span>
-<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">177x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">177x</span>
+<span class="cline-any cline-yes">40x</span>
+<span class="cline-any cline-yes">137x</span>
+<span class="cline-any cline-yes">134x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// server/utils/db.js
-// Kết nối MongoDB
-import mongoose from "mongoose";
-import dotenv from "dotenv";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import Unit from "../models/Unit.js";
 &nbsp;
-dotenv.config();
-&nbsp;
-export async function connectDB() {
-  const uri = process.env.MONGODB_URI;
-&nbsp;
-  if (!uri) {
-    console.error("❌ MONGODB_URI not set in .env");
-    process.exit(1);
-  }
-&nbsp;
+/**
+ * GET /tree
+ * Tạo cây phân cấp từ MongoDB
+ */
+export async function getTree(req, res) {
   try {
-    const conn = await mongoose.connect(uri);
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
+    const units = await Unit.find();
+    const map = {};
+&nbsp;
+    // Gom dữ liệu theo parentCode
+    for (const u of units) map[u.code] = { ...u.toObject(), children: [] };
+    const tree = [];
+&nbsp;
+    for (const u of units) {
+      if (u.parentCode &amp;&amp; map[u.parentCode]) {
+        map[u.parentCode].children.push(map[u.code]);
+      } else if (u.level === "province") {
+        tree.push(map[u.code]);
+      }
+    }
+&nbsp;
+    res.json(tree);
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1);
+    console.error("❌ Tree error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
 &nbsp;</pre></td></tr></table></pre>

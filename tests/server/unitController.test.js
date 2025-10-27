@@ -1,6 +1,6 @@
 /**
- * ✅ Test toàn bộ UnitController CRUD + Restore bằng Jest + Supertest
- * 🧠 Không sửa code dự án, chỉ thao tác tạm thời trên file JSON
+ * ✅ Test toàn bộ UnitController CRUD + Restore bằng Jest + Supertest cho 100% coverage
+ * 🧠 Test cả MongoDB và JSON branches
  */
 
 import { jest } from "@jest/globals";
@@ -8,16 +8,23 @@ import request from "supertest";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
-import app from "../../server.js"; // Express app
+import app from "../../server.js";
 import Unit from "../../server/models/Unit.js";
 import UnitHistory from "../../server/models/UnitHistory.js";
-import { MongoMemoryServer } from "mongodb-memory-server";
 
 const dataPath = path.join(process.cwd(), "data/full-address.json");
-
+const originalNodeEnv = process.env.NODE_ENV;
 let backupJSON = "";
+let backupJSON2 = "";
 
-/** 🧱 Backup & setup JSON + kết nối Mongo thật */
+// Mock fs for error testing
+const mockFs = {
+  readFileSync: jest.spyOn(fs, 'readFileSync'),
+  writeFileSync: jest.spyOn(fs, 'writeFileSync'),
+  existsSync: jest.spyOn(fs, 'existsSync')
+};
+
+/** 🧱 Setup global */
 beforeAll(async () => {
   // Backup file JSON gốc
   if (fs.existsSync(dataPath)) {
@@ -26,10 +33,9 @@ beforeAll(async () => {
     fs.writeFileSync(dataPath, "[]", "utf8");
   }
 
-  // Tạo tỉnh giả nếu chưa có
-  const data = JSON.parse(fs.readFileSync(dataPath, "utf8") || "[]");
-  if (!data.some((p) => p.code === "VN001")) {
-    data.push({
+  // Backup for JSON tests
+  backupJSON2 = JSON.stringify([
+    {
       code: "VN001",
       name: "Tỉnh Test",
       englishName: "Test Province",
@@ -37,24 +43,41 @@ beforeAll(async () => {
       decree: "",
       level: "province",
       parentCode: null,
-      communes: [],
-    });
-    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), "utf8");
-  }
+      communes: [
+        {
+          code: "CM001",
+          name: "Xã Old",
+          englishName: "Old Ward",
+          administrativeLevel: "Xã",
+          provinceCode: "VN001",
+          provinceName: "Tỉnh Test",
+          decree: "Old Decree",
+          level: "commune",
+          parentCode: "VN001"
+        }
+      ],
+    }
+  ], null, 2);
 
-  // 🔗 Sử dụng MongoMemoryServer cho test isolation
-  // Không cần connect lại vì server.js đã connect
+  fs.writeFileSync(dataPath, backupJSON2, "utf8");
 
-  // Xóa dữ liệu cũ (nếu có)
   await Unit.deleteMany({});
   await UnitHistory.deleteMany({});
 });
 
-/** 🧹 Cleanup sau test */
 afterAll(async () => {
-  if (backupJSON) fs.writeFileSync(dataPath, backupJSON, "utf8");
-  await mongoose.connection.dropDatabase(); // Xóa database test
+  process.env.NODE_ENV = originalNodeEnv;
+  mockFs.readFileSync.mockRestore();
+  mockFs.writeFileSync.mockRestore();
+  mockFs.existsSync.mockRestore();
+  fs.writeFileSync(dataPath, backupJSON, "utf8");
+  await mongoose.connection.dropDatabase();
   await mongoose.disconnect();
+});
+
+beforeEach(async () => {
+  await Unit.deleteMany({});
+  await UnitHistory.deleteMany({});
 });
 
 const testUnit = {
@@ -69,96 +92,279 @@ const testUnit = {
   administrativeLevel: "Phường"
 };
 
-describe("🧩 UnitController CRUD + Restore", () => {
+describe("🧩 UnitController - MongoDB Branch (NODE_ENV=test)", () => {
+  let originalEnv;
+
+  beforeAll(() => {
+    originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
+  });
+
+  afterAll(() => {
+    process.env.NODE_ENV = originalEnv;
+  });
+
   // CREATE
-  it("Tạo phường mới thành công", async () => {
-    // First create the parent province
+  it("Tạo đơn vị trong MongoDB (test env)", async () => {
+    // Create parent first
     const parentUnit = {
       name: "Tỉnh Test",
-      code: "VN001",
+      code: "VN001_TEST",
       level: "province",
-      parentCode: null,
-      provinceCode: null,
-      provinceName: null,
-      decree: "Nghị định test",
       englishName: "Test Province",
       administrativeLevel: "Tỉnh"
     };
-    
+
     const parentRes = await request(app).post("/units").send(parentUnit);
-    console.log("Parent creation status:", parentRes.statusCode);
-    console.log("Parent creation body:", parentRes.body);
-    
-    // Then create the commune
-    const res = await request(app).post("/units").send(testUnit);
-    console.log("Response status:", res.statusCode);
-    console.log("Response body:", res.body);
+    expect(parentRes.statusCode).toBe(201);
+
+    // Create commune
+    const res = await request(app).post("/units").send({
+      ...testUnit,
+      code: "TEST001_MONGO",
+      parentCode: "VN001_TEST"
+    });
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toMatch(/Tạo thành công/);
   });
 
-  it("Không cho tạo khi thiếu thông tin", async () => {
-    const res = await request(app).post("/units").send({ name: "Thiếu code" });
+  it("Không cho tạo khi mã trùng (MongoDB)", async () => {
+    // Create first
+    await Unit.create(testUnit);
+
+    const res = await request(app).post("/units").send(testUnit);
     expect(res.statusCode).toBe(400);
-    expect(res.body.error).toMatch(/Thiếu thông tin bắt buộc/);
+    expect(res.body.error).toMatch(/Mã đơn vị đã tồn tại/);
   });
 
-  it("Không cho tạo khi không tìm thấy cha", async () => {
+  it("Không cho tạo khi không tìm thấy cha (MongoDB)", async () => {
     const res = await request(app).post("/units").send({
       ...testUnit,
-      code: "TEST002",
-      parentCode: "INVALID_PARENT",
+      parentCode: "INVALID"
     });
-    // Note: This test might pass if the controller doesn't validate parent
-    // This is acceptable behavior
-    if (res.statusCode === 404) {
-      expect(res.body.error).toMatch(/Không tìm thấy đơn vị cha/);
-    } else {
-      expect(res.statusCode).toBe(201);
-    }
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toMatch(/Không tìm thấy đơn vị cha/);
   });
 
   // UPDATE
-  it("Cập nhật phường thành công", async () => {
+  it("Cập nhật trong MongoDB (test env)", async () => {
+    await Unit.create({ ...testUnit, code: "UPDATE_TEST" });
+
     const res = await request(app)
-      .put(`/units/${testUnit.code}`)
-      .send({ name: "Phường Test Updated" });
+      .put("/units/UPDATE_TEST")
+      .send({ name: "Updated" });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toMatch(/Cập nhật thành công/);
   });
 
-  it("Không cập nhật khi mã không tồn tại", async () => {
+  it("Không cập nhật khi không tồn tại (MongoDB)", async () => {
     const res = await request(app)
-      .put("/units/INVALID")
-      .send({ name: "Không tồn tại" });
+      .put("/units/NOT_EXIST")
+      .send({ name: "Test" });
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toMatch(/Không tìm thấy đơn vị/);
   });
 
   // DELETE
-  it("Xóa đơn vị thành công và ghi lịch sử", async () => {
-    const res = await request(app).delete(`/units/${testUnit.code}`);
+  it("Xóa trong MongoDB (test env)", async () => {
+    await Unit.create({ ...testUnit, code: "DELETE_TEST" });
+
+    const res = await request(app).delete("/units/DELETE_TEST");
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toMatch(/Xóa thành công/);
   });
 
+  it("Không tìm thấy đơn vị để xóa (MongoDB)", async () => {
+    const res = await request(app).delete("/units/NOT_EXIST");
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toMatch(/Không tìm thấy đơn vị cần xóa/);
+  });
+});
+
+describe("🧩 UnitController - JSON Branch", () => {
+  let originalEnv;
+
+  beforeAll(() => {
+    originalEnv = process.env.NODE_ENV;
+    // Set NODE_ENV to non-test to use JSON
+    process.env.NODE_ENV = 'development';
+    // Ensure JSON file has data
+    fs.writeFileSync(dataPath, backupJSON2, "utf8");
+  });
+
+  afterAll(() => {
+    process.env.NODE_ENV = originalEnv;
+  });
+
+  // CREATE JSON
+  it("Tạo đơn vị trong JSON", async () => {
+    const newUnit = {
+      name: "Xã Mới",
+      code: "JSON001",
+      level: "commune",
+      parentCode: "VN001",
+      provinceCode: "VN001",
+      provinceName: "Tỉnh Test",
+      decree: "Decree",
+      englishName: "New Comm",
+      administrativeLevel: "Xã"
+    };
+
+    const res = await request(app).post("/units").send(newUnit);
+    expect(res.statusCode).toBe(201);
+    expect(res.body.message).toMatch(/Thêm đơn vị hành chính thành công/);
+  });
+
+  it("Không cho tạo khi mã trùng trong JSON", async () => {
+    const res = await request(app).post("/units").send({
+      ...testUnit,
+      code: "VN001" // Already exists
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/Mã đơn vị đã tồn tại/);
+  });
+
+  it("Không cho tạo khi thiếu thông tin bắt buộc", async () => {
+    const res = await request(app).post("/units").send({ name: "Thiếu code" });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/Thiếu thông tin bắt buộc/);
+  });
+
+  // UPDATE JSON
+  it("Cập nhật trong JSON", async () => {
+    const res = await request(app)
+      .put("/units/CM001")
+      .send({ name: "Xã Updated" });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toMatch(/Cập nhật thành công/);
+  });
+
+  it("Không tìm thấy đơn vị để cập nhật trong JSON", async () => {
+    const res = await request(app)
+      .put("/units/NOT_EXIST")
+      .send({ name: "Test" });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toMatch(/Không tìm thấy đơn vị trong JSON/);
+  });
+
+  // DELETE JSON
+  it("Xóa trong JSON", async () => {
+    const res = await request(app).delete("/units/CM001");
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toMatch(/Đã xóa và lưu lịch sử/);
+  });
+
+  // GET BY ID JSON
+  it("Tìm trong JSON khi không có trong MongoDB", async () => {
+    const res = await request(app).get("/units/VN001");
+    expect(res.statusCode).toBe(200);
+    expect(res.body.code).toBe("VN001");
+  });
+
+  it("Không tìm thấy trong JSON", async () => {
+    const res = await request(app).get("/units/NOT_IN_JSON");
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toMatch(/Không tìm thấy đơn vị hành chính/);
+  });
+});
+
+describe("🧩 UnitController - Error Handling & Helpers", () => {
+  let originalEnv;
+
+  beforeAll(() => {
+    originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+  });
+
+  afterAll(() => {
+    process.env.NODE_ENV = originalEnv;
+  });
+
+  it("Helper readJSON - lỗi đọc file", async () => {
+    mockFs.readFileSync.mockImplementationOnce(() => {
+      throw new Error("File read error");
+    });
+
+    const res = await request(app).get("/units/VN001");
+    expect(res.statusCode).toBe(404);
+
+    mockFs.readFileSync.mockRestore();
+  });
+
+  it("Helper writeJSON - lỗi ghi file", async () => {
+    // Mock console.error to verify error logging
+    const originalConsoleError = console.error;
+    const mockConsoleError = jest.fn();
+    console.error = mockConsoleError;
+
+    // Ensure NODE_ENV triggers JSON write
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
+    // Mock fs.writeFileSync to fail
+    const originalWriteFileSync = fs.writeFileSync;
+    fs.writeFileSync = jest.fn(() => {
+      throw new Error("File write error");
+    });
+
+    // Create province to trigger JSON write
+    const res = await request(app).post("/units").send({
+      name: "Error Province",
+      code: "ERROR002",
+      level: "province"
+    });
+    expect(res.statusCode).toBe(201); // Function handles error internally, completes successfully
+    expect(res.body.message).toMatch(/Thêm đơn vị hành chính thành công/);
+
+    // Verify error was logged
+    expect(mockConsoleError).toHaveBeenCalledWith("❌ Lỗi ghi file JSON:", expect.any(Error));
+
+    // Restore
+    console.error = originalConsoleError;
+    fs.writeFileSync = originalWriteFileSync;
+    process.env.NODE_ENV = originalEnv;
+  });
+
+  it("Lỗi database trong createUnit JSON", async () => {
+    // Ensure NODE_ENV is development
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
+    // Mock mongoose create to fail
+    const mockCreate = jest.spyOn(Unit, 'create').mockRejectedValueOnce(new Error("DB Error"));
+
+    const res = await request(app).post("/units").send({
+      name: "Fail Unit",
+      code: "FAIL001",
+      level: "province"
+    });
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe("Internal Server Error");
+
+    mockCreate.mockRestore();
+    process.env.NODE_ENV = originalEnv;
+  });
+});
+
+// HISTORY and RESTORE - shared
+describe("🧩 UnitController - History & Restore", () => {
   // HISTORY
   it("Lấy lịch sử hoạt động", async () => {
     await UnitHistory.create({
-      code: testUnit.code,
+      code: "HIST001",
       action: "update",
       oldData: { name: "Cũ" },
       newData: { name: "Mới" },
       changedAt: new Date(),
     });
 
-    const res = await request(app).get(`/units/${testUnit.code}/history`);
+    const res = await request(app).get("/units/HIST001/history");
     expect(res.statusCode).toBe(200);
     expect(res.body.length).toBeGreaterThan(0);
   });
 
   it("Không có lịch sử thì trả về 404", async () => {
-    const res = await request(app).get("/units/INVALID/history");
+    const res = await request(app).get("/units/NO_HISTORY/history");
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toMatch(/Không có lịch sử/);
   });
@@ -166,11 +372,11 @@ describe("🧩 UnitController CRUD + Restore", () => {
   // RESTORE
   it("Khôi phục từ lịch sử thành công", async () => {
     await UnitHistory.create({
-      code: "REST001",
+      code: "RESTORE001",
       action: "delete",
       oldData: null,
       newData: {
-        code: "REST001",
+        code: "RESTORE001",
         name: "Phường Restore",
         level: "commune",
         parentCode: "VN001",
@@ -181,7 +387,7 @@ describe("🧩 UnitController CRUD + Restore", () => {
     });
 
     const res = await request(app)
-      .post("/units/REST001/restore")
+      .post("/units/RESTORE001/restore")
       .send({});
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toMatch(/Đã khôi phục thành công/);
@@ -189,23 +395,25 @@ describe("🧩 UnitController CRUD + Restore", () => {
 
   it("Không tìm thấy bản ghi để khôi phục", async () => {
     const res = await request(app)
-      .post("/units/INVALID/restore")
+      .post("/units/NO_RECORD/restore")
       .send({});
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toMatch(/Không tìm thấy bản ghi để khôi phục/);
   });
 
-  // GET BY ID
-  it("Lấy chi tiết đơn vị theo mã", async () => {
-    await Unit.create(testUnit);
-    const res = await request(app).get(`/units/${testUnit.code}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body.code).toBe(testUnit.code);
-  });
+  it("Không có dữ liệu để khôi phục", async () => {
+    await UnitHistory.create({
+      code: "EMPTY001",
+      action: "delete",
+      oldData: null,
+      newData: null,
+      changedAt: new Date(),
+    });
 
-  it("Không tìm thấy đơn vị theo mã", async () => {
-    const res = await request(app).get("/units/INVALID");
-    expect(res.statusCode).toBe(404);
-    expect(res.body.error).toMatch(/Không tìm thấy đơn vị/);
+    const res = await request(app)
+      .post("/units/EMPTY001/restore")
+      .send({});
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/Không có dữ liệu để khôi phục/);
   });
 });

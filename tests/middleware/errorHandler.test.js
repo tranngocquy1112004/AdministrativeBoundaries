@@ -543,4 +543,59 @@ describe("🚨 ErrorHandler Middleware Tests", () => {
       });
     });
   });
+
+  describe("Middleware Identification", () => {
+    test("should have correct _middlewareName for notFoundHandler", () => {
+      expect(notFoundHandler._middlewareName).toBe('notFoundHandler');
+    });
+
+    test("should have correct _middlewareName for errorHandler", () => {
+      expect(errorHandler._middlewareName).toBe('errorHandler');
+    });
+  });
+
+  describe("Development Environment Error Response", () => {
+    test("should include stack trace and details in development", async () => {
+      // Arrange
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+      
+      const testRoute = "/test-dev-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Development error"));
+      setupErrorHandlers();
+
+      // Act
+      const response = await request(app).get(testRoute);
+
+      // Assert
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty("stack");
+      expect(response.body).toHaveProperty("details");
+      expect(response.body.details).toBe("Development error");
+
+      // Cleanup
+      process.env.NODE_ENV = originalEnv;
+    });
+
+    test("should not include stack trace in production", async () => {
+      // Arrange
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      
+      const testRoute = "/test-prod-error-" + Date.now();
+      addErrorTestRoute(testRoute, new Error("Production error"));
+      setupErrorHandlers();
+
+      // Act
+      const response = await request(app).get(testRoute);
+
+      // Assert
+      expect(response.status).toBe(500);
+      expect(response.body).not.toHaveProperty("stack");
+      expect(response.body).not.toHaveProperty("details");
+
+      // Cleanup
+      process.env.NODE_ENV = originalEnv;
+    });
+  });
 });
