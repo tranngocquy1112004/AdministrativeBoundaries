@@ -1,0 +1,51 @@
+[
+  {
+    "id": 1,
+    "name": "Hà Nội",
+    "code": "01",
+    "level": "province"
+  },
+  {
+    "id": 3,
+    "name": "Phúc Xá",
+    "code": "010101",
+    "level": "commune",
+    "parentCode": "0101"
+  },
+  {
+    "id": 1761104823522,
+    "name": "Hồ Chí Minh",
+    "code": "02",
+    "level": "province",
+    "parentCode": null,
+    "boundary": null,
+    "createdAt": "2025-10-22T03:47:03.522Z",
+    "updatedAt": "2025-10-22T03:47:03.523Z",
+    "history": [],
+    "children": []
+  },
+  {
+    "id": 1761104833897,
+    "name": "Quận 1",
+    "code": "0201",
+    "level": "district",
+    "parentCode": "02",
+    "boundary": null,
+    "createdAt": "2025-10-22T03:47:13.897Z",
+    "updatedAt": "2025-10-22T03:47:13.897Z",
+    "history": [],
+    "children": []
+  },
+  {
+    "id": 1761113093533,
+    "name": "Hà Nam",
+    "code": "03",
+    "level": "province",
+    "parentCode": null,
+    "boundary": null,
+    "createdAt": "2025-10-22T06:04:53.533Z",
+    "updatedAt": "2025-10-22T06:04:53.533Z",
+    "history": [],
+    "children": []
+  }
+]

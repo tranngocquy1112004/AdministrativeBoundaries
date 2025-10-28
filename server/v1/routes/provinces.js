@@ -11,7 +11,6 @@ import {
 } from "../controllers/provinceController.js";
 
 const router = express.Router();
-
 router.get("/", getProvinces);
 router.get("/:provinceCode", getProvinceByCode);
 router.get("/id/:id", getProvinceById);

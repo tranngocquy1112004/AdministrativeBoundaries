@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
-import { logInfo, logError } from "../utils/logger.js";
+import { logInfo, logError } from "../../server/v1/utils/logger.js";
 
 dotenv.config();
 

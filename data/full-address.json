@@ -30165,7 +30165,7 @@
     ]
   },
   {
-    "name": "Hà Nam",
+    "name": "Tỉnh Hà Nam",
     "code": 35,
     "codename": "tinh_ha_nam",
     "division_type": "tỉnh",
@@ -30911,9 +30911,7 @@
           }
         ]
       }
-    ],
-    "updatedAt": "2025-10-28T07:33:01.617Z",
-    "englishName": "Ha Nam Province"
+    ]
   },
   {
     "name": "Tỉnh Nam Định",
@@ -53804,7 +53802,8 @@
           }
         ]
       }
-    ]
+    ],
+    "updatedAt": "2025-10-28T14:31:57.682Z"
   },
   {
     "name": "Tỉnh Gia Lai",

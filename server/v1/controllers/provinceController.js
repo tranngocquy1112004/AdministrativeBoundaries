@@ -6,7 +6,7 @@ import UnitHistory from "../models/UnitHistory.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const filePath = path.join(__dirname, "../../data/full-address.json");
+const filePath = path.join(process.cwd(), "data/full-address.json");
 
 // =============================
 // 🔹 LẤY DANH SÁCH TỈNH (3 CẤP)
@@ -14,6 +14,7 @@ const filePath = path.join(__dirname, "../../data/full-address.json");
 export async function getProvinces(req, res) {
   try {
     const provinces = await Unit.find({
+      schemaVersion: 'v1',
       level: "province",
       $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }],
     }).lean();
@@ -21,8 +22,8 @@ export async function getProvinces(req, res) {
     if (provinces.length > 0) {
       console.log(`✅ Loaded ${provinces.length} provinces from MongoDB`);
 
-      const districts = await Unit.find({ level: "district" }).lean();
-      const communes = await Unit.find({ level: "commune" }).lean();
+      const districts = await Unit.find({ schemaVersion: 'v1', level: "district" }).lean();
+      const communes = await Unit.find({ schemaVersion: 'v1', level: "commune" }).lean();
 
       const fullData = provinces.map((p) => ({
         ...p,
@@ -63,10 +64,10 @@ export async function getProvinceByCode(req, res) {
     const { provinceCode } = req.params;
 
     // Ưu tiên MongoDB
-    const province = await Unit.findOne({ code: provinceCode, level: "province" }).lean();
+    const province = await Unit.findOne({ schemaVersion: 'v1', code: provinceCode, level: "province" }).lean();
     if (province) {
-      const districts = await Unit.find({ level: "district", parentCode: provinceCode }).lean();
-      const communes = await Unit.find({ level: "commune" }).lean();
+      const districts = await Unit.find({ schemaVersion: 'v1', level: "district", parentCode: provinceCode }).lean();
+      const communes = await Unit.find({ schemaVersion: 'v1', level: "commune" }).lean();
 
       const fullProvince = {
         ...province,

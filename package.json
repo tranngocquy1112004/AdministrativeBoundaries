@@ -11,9 +11,12 @@
     "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --coverage --detectOpenHandles --forceExit",
     "test:debug": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles --verbose",
     "start": "node server.js",
-    "fetch": "node fetcher/index.js",
+    "fetch": "node fetcher/v1/index.js",
+    "fetch:v1": "node fetcher/v1/index.js",
     "schedule": "node fetcher/schedule.js",
-    "import-units": "node server/scripts/importUnits.js"
+    "import-units": "node server/v1/scripts/importUnits.js",
+    "fetch:v2": "node fetcher/v2/index.js",
+    "import-units:v2": "node server/scripts/importUnits.v2.js"
   },
   "keywords": [],
   "author": "",

@@ -6,7 +6,7 @@ import UnitHistory from "../models/UnitHistory.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_PATH = path.join(__dirname, "../../data/full-address.json");
+const DATA_PATH = path.join(process.cwd(), "data/full-address.json");
 
 //
 // ========================== 🔧 TIỆN ÍCH ==========================
@@ -44,6 +44,7 @@ export async function getCommunes(req, res) {
     // 🔹 Nếu có provinceCode → lấy toàn bộ xã thuộc các huyện trong tỉnh đó
     if (provinceCode) {
       const districts = await Unit.find({
+        schemaVersion: 'v1',
         level: "district",
         parentCode: String(provinceCode),
       }).lean();
@@ -52,7 +53,7 @@ export async function getCommunes(req, res) {
       query.parentCode = { $in: districtCodes };
     }
 
-    const communes = await Unit.find(query).lean();
+    const communes = await Unit.find({ ...query, schemaVersion: 'v1' }).lean();
 
     if (communes.length > 0) {
       console.log(`✅ Loaded ${communes.length} communes from MongoDB`);
@@ -113,6 +114,7 @@ export async function getCommuneByCode(req, res) {
 
     // 1) Try match in MongoDB using $expr to compare string values (safe even if stored as number or string)
     const commune = await Unit.findOne({
+      schemaVersion: 'v1',
       level: "commune",
       $expr: { $eq: [{ $toString: "$code" }, codeStr] },
       $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }],
@@ -160,6 +162,7 @@ export async function createCommune(req, res) {
     }
 
     const exists = await Unit.findOne({
+      schemaVersion: 'v1',
       level: "commune",
       code: String(code),
     });
@@ -167,9 +170,10 @@ export async function createCommune(req, res) {
       return res.status(409).json({ error: "Commune already exists" });
 
     // ✅ Sinh uniqueKey động trong hàm
-    const uniqueKey = `commune-${code}`;
+    const uniqueKey = `v1-commune-${code}`;
 
     const newCommune = await Unit.create({
+      schemaVersion: 'v1',
       code,
       name,
       englishName: englishName || "",
@@ -227,6 +231,7 @@ export async function updateCommune(req, res) {
     const { name, englishName, administrativeLevel, decree } = req.body;
 
     const commune = await Unit.findOne({
+      schemaVersion: 'v1',
       code: String(communeCode),
       level: "commune",
     });
@@ -277,6 +282,7 @@ export async function deleteCommune(req, res) {
   try {
     const { communeCode } = req.params;
     const commune = await Unit.findOne({
+      schemaVersion: 'v1',
       code: String(communeCode),
       level: "commune",
     });
@@ -312,6 +318,7 @@ export async function restoreCommune(req, res) {
   try {
     const { communeCode } = req.params;
     const deleted = await Unit.findOne({
+      schemaVersion: 'v1',
       code: String(communeCode),
       level: "commune",
       isDeleted: true,
@@ -339,7 +346,7 @@ export async function restoreCommune(req, res) {
 // ========================== 🧾 HISTORY ==========================
 export async function getDeletedCommunes(req, res) {
   try {
-    const deleted = await Unit.find({ level: "commune", isDeleted: true })
+    const deleted = await Unit.find({ schemaVersion: 'v1', level: "commune", isDeleted: true })
       .sort({ deletedAt: -1 })
       .lean();
 

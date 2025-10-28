@@ -12,11 +12,13 @@ import {
 const router = express.Router();
 
 router.get("/", getDistricts);
-router.get("/:districtCode", getDistrictByCode);
 router.get("/deleted/list", getDeletedDistricts);
+router.get("/:districtCode", getDistrictByCode);
 router.post("/", createDistrict);
 router.put("/:districtCode", updateDistrict);
 router.delete("/:districtCode", deleteDistrict);
 router.post("/:districtCode/restore", restoreDistrict);
 
 export default router;
+
+

@@ -1,5 +1,3 @@
-// server/utils/db.js
-// Kết nối MongoDB
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
@@ -7,12 +5,10 @@ dotenv.config();
 
 export async function connectDB() {
   const uri = process.env.MONGODB_URI;
-
   if (!uri) {
-    console.error("❌ MONGODB_URI not set in .env");
+    console.error("❌ MONGODB_URI chưa cấu hình trong .env");
     process.exit(1);
   }
-
   try {
     const conn = await mongoose.connect(uri);
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
@@ -21,3 +17,5 @@ export async function connectDB() {
     process.exit(1);
   }
 }
+
+

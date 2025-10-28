@@ -6,7 +6,7 @@ import UnitHistory from "../models/UnitHistory.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const filePath = path.join(__dirname, "../../data/full-address.json");
+const filePath = path.join(process.cwd(), "data/full-address.json");
 
 // ====================================================
 // 🔹 LẤY DANH SÁCH HUYỆN (toàn bộ hoặc theo mã tỉnh)
@@ -15,7 +15,7 @@ export async function getDistricts(req, res) {
   try {
     const { provinceCode } = req.query;
 
-    let query = { level: "district", $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] };
+    let query = { schemaVersion: 'v1', level: "district", $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] };
     if (provinceCode) query.parentCode = provinceCode;
 
     const districts = await Unit.find(query).lean();
@@ -53,7 +53,7 @@ export async function getDistricts(req, res) {
 export async function getDistrictByCode(req, res) {
   try {
     const { districtCode } = req.params;
-    const district = await Unit.findOne({ code: districtCode, level: "district" }).lean();
+    const district = await Unit.findOne({ schemaVersion: 'v1', code: districtCode, level: "district" }).lean();
 
     if (!district) {
       console.warn(`⚠️ District ${districtCode} not found in MongoDB → fallback JSON`);
@@ -81,7 +81,7 @@ export async function createDistrict(req, res) {
   try {
     const { code, name, englishName, administrativeLevel, decree, parentCode } = req.body;
 
-    const existing = await Unit.findOne({ code, level: "district" });
+    const existing = await Unit.findOne({ schemaVersion: 'v1', code, level: "district" });
     if (existing) return res.status(409).json({ error: "District already exists" });
 
     const newDistrict = await Unit.create({
@@ -90,6 +90,7 @@ export async function createDistrict(req, res) {
       englishName: englishName || "",
       administrativeLevel: administrativeLevel || "Huyện",
       decree: decree || "",
+      schemaVersion: 'v1',
       level: "district",
       parentCode: parentCode || null,
       createdAt: new Date(),
@@ -127,7 +128,7 @@ export async function updateDistrict(req, res) {
     const { districtCode } = req.params;
     const { name, englishName, administrativeLevel, decree } = req.body;
 
-    const district = await Unit.findOne({ code: districtCode, level: "district" });
+    const district = await Unit.findOne({ schemaVersion: 'v1', code: districtCode, level: "district" });
     if (!district) return res.status(404).json({ error: "District not found" });
 
     const updateData = {
@@ -194,7 +195,7 @@ export async function deleteDistrict(req, res) {
 
     // Soft delete trong Mongo
     const deletedDistrict = await Unit.findOneAndUpdate(
-      { code: districtCode, level: "district" },
+      { schemaVersion: 'v1', code: districtCode, level: "district" },
       { isDeleted: true, deletedAt: new Date() },
       { new: true }
     );
@@ -213,11 +214,11 @@ export async function restoreDistrict(req, res) {
   try {
     const { districtCode } = req.params;
 
-    const deletedDistrict = await Unit.findOne({ code: districtCode, level: "district", isDeleted: true });
+    const deletedDistrict = await Unit.findOne({ schemaVersion: 'v1', code: districtCode, level: "district", isDeleted: true });
     if (!deletedDistrict) return res.status(404).json({ error: "Deleted district not found" });
 
     const restored = await Unit.findOneAndUpdate(
-      { code: districtCode, level: "district" },
+      { schemaVersion: 'v1', code: districtCode, level: "district" },
       { $unset: { isDeleted: 1, deletedAt: 1 }, $set: { updatedAt: new Date() } },
       { new: true }
     );
@@ -253,7 +254,7 @@ export async function restoreDistrict(req, res) {
 // ====================================================
 export async function getDeletedDistricts(req, res) {
   try {
-    const deleted = await Unit.find({ level: "district", isDeleted: true }).sort({ deletedAt: -1 }).lean();
+    const deleted = await Unit.find({ schemaVersion: 'v1', level: "district", isDeleted: true }).sort({ deletedAt: -1 }).lean();
     return res.json({ count: deleted.length, deleted });
   } catch (err) {
     console.error("❌ Error getDeletedDistricts:", err);

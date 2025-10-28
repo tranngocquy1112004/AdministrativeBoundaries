@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import Unit from "../models/Unit.js";
-import UnitHistory from "../models/UnitHistory.js";
+import Unit from "../../../models/Unit.js";
+import UnitHistory from "../../../models/UnitHistory.js";
 
 const dataPath = path.join(process.cwd(), "data/full-address.json");
 
