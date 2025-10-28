@@ -7,91 +7,107 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const filePath = path.join(__dirname, "../../data/full-address.json");
 
-// 🔹 Hàm chuẩn hóa chuỗi
+/** 🧩 Chuẩn hóa chuỗi để so khớp dễ hơn */
 function normalize(str) {
   return str
     ?.normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/Tỉnh|Thành phố|Phường|Xã|Thị trấn/gi, "")
+    .replace(/(tinh|thanh pho|quan|huyen|thi xa|xa|phuong|thi tran)/gi, "")
+    .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
 }
 
+/** 🔄 Chuyển đổi địa chỉ thành mã hành chính */
 export async function convertAddress(req, res) {
   try {
     const { address } = req.body;
-    if (!address)
-      return res.status(400).json({ error: "Thiếu địa chỉ cần chuyển đổi" });
 
-    const parts = address.split(",").map((p) => p.trim());
-    if (parts.length < 2)
-      return res
-        .status(400)
-        .json({ error: "Địa chỉ phải có ít nhất 2 cấp (Tỉnh, Xã/Phường)" });
+    if (!address || typeof address !== "string") {
+      return res.status(400).json({ error: "Thiếu hoặc sai định dạng 'address'" });
+    }
 
-    const [provinceName, communeName] = parts;
-    const provinceNorm = normalize(provinceName);
-    const communeNorm = normalize(communeName);
+    // 🧠 Phân tích chuỗi (VD: "Xã Bến Nghé, Quận 1, TP Hồ Chí Minh")
+    const parts = address.split(",").map((p) => p.trim()).reverse(); // đảo lại: [tỉnh, huyện, xã]
+    const [provinceName, districtName, communeName] = parts;
 
-    console.log("🧩 Nhận địa chỉ:", address);
+    console.log("📬 Nhận địa chỉ:", address);
 
-    // ---------------------------
-    // 1️⃣ ƯU TIÊN LẤY TỪ MONGO
-    // ---------------------------
+    // ==============================
+    // 1️⃣ TRA TỪ MONGODB TRƯỚC
+    // ==============================
     let province = await Unit.findOne({
-      name: { $regex: provinceName.replace(/Tỉnh|Thành phố/gi, "").trim(), $options: "i" },
       level: "province",
+      name: { $regex: normalize(provinceName), $options: "i" },
     });
 
-    let commune = null;
-    if (province) {
-      commune = await Unit.findOne({
-        name: { $regex: communeName.replace(/Phường|Xã|Thị trấn/gi, "").trim(), $options: "i" },
-        level: "commune",
+    let district = null;
+    if (province && districtName) {
+      district = await Unit.findOne({
+        level: "district",
         parentCode: province.code,
+        name: { $regex: normalize(districtName), $options: "i" },
       });
     }
 
-    // ---------------------------
+    let commune = null;
+    if (district && communeName) {
+      commune = await Unit.findOne({
+        level: "commune",
+        parentCode: district.code,
+        name: { $regex: normalize(communeName), $options: "i" },
+      });
+    }
+
+    // ==============================
     // 2️⃣ FALLBACK QUA FILE JSON
-    // ---------------------------
-    if (!province || !commune) {
-      console.warn("⚠️ Fallback JSON → Searching locally");
+    // ==============================
+    if (!province || !district || !commune) {
+      console.warn("⚠️ MongoDB thiếu dữ liệu → fallback JSON");
       const rawData = fs.readFileSync(filePath, "utf8");
       const provinces = JSON.parse(rawData);
 
       province =
         province ||
-        provinces.find((p) =>
-          new RegExp(provinceName.replace(/Tỉnh|Thành phố/gi, "").trim(), "i").test(p.name)
-        );
+        provinces.find((p) => normalize(p.name).includes(normalize(provinceName)));
 
-      if (province && Array.isArray(province.communes)) {
-        commune =
-          commune ||
-          province.communes.find((c) =>
-            new RegExp(communeName.replace(/Phường|Xã|Thị trấn/gi, "").trim(), "i").test(c.name)
+      if (province && Array.isArray(province.districts)) {
+        district =
+          district ||
+          province.districts.find((d) =>
+            normalize(d.name).includes(normalize(districtName))
           );
+
+        if (district && Array.isArray(district.communes)) {
+          commune =
+            commune ||
+            district.communes.find((c) =>
+              normalize(c.name).includes(normalize(communeName))
+            );
+        }
       }
     }
 
-    // ---------------------------
-    // 3️⃣ TRẢ KẾT QUẢ
-    // ---------------------------
+    // ==============================
+    // 3️⃣ KẾT QUẢ TRẢ VỀ
+    // ==============================
     return res.json({
-      original: address,
-      matched: {
+      input: address,
+      result: {
         province: province?.name || null,
+        district: district?.name || null,
         commune: commune?.name || null,
       },
       codes: {
         province: province?.code || null,
+        district: district?.code || null,
         commune: commune?.code || null,
       },
-      found: !!(province && commune),
+      found: !!(province && district && commune),
+      source: province ? "MongoDB" : "JSON Fallback",
     });
   } catch (err) {
-    console.error("❌ Convert Error:", err);
+    console.error("❌ Lỗi khi convert địa chỉ:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 }

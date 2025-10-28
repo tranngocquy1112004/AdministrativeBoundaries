@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log*
+.git
+.gitignore
+README.md
+coverage/
+tests/
+jest.config.js
+jest.setup.js
+jest.global-setup.js
+jest.global-teardown.js
+tests.txt

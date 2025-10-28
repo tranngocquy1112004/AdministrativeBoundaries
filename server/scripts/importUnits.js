@@ -18,98 +18,92 @@ async function importUnits() {
     );
     console.log("✅ Connected to MongoDB");
 
+    // Kiểm tra file JSON
     if (!fs.existsSync(dataPath)) {
       throw new Error(`❌ Không tìm thấy file dữ liệu tại: ${dataPath}`);
     }
 
     const jsonData = JSON.parse(fs.readFileSync(dataPath, "utf8"));
-    console.log(`📦 Found ${jsonData.length} provinces`);
+    console.log(`📦 Found ${jsonData.length} provinces in JSON`);
 
+    // 🧹 Xóa toàn bộ dữ liệu cũ
     await Unit.deleteMany({});
     console.log("🧹 Cleared old data");
 
-    for (const province of jsonData) {
-      // 👉 Thêm cấp tỉnh
+    // 🔑 Tạo unique index
+    await Unit.collection.createIndex({ uniqueKey: 1 }, { unique: true });
+    console.log("🔑 Created unique index for uniqueKey");
+
+    // ===================================
+    // ⚙️ Hàm tiện ích tạo dữ liệu
+    // ===================================
+    const createUnit = async (item, level, parentCode = null, parentName = null) => {
+      const code = String(item.code || "").trim();
+      if (!code) {
+        console.warn(`⚠️ Bỏ qua ${level} không có code: ${item.name}`);
+        return;
+      }
+
+      const uniqueKey = `${level}-${code}`;
+      const doc = {
+        name: item.name,
+        code,
+        englishName: item.englishName || "",
+        administrativeLevel: item.administrativeLevel || "",
+        provinceCode: item.provinceCode || null,
+        provinceName: item.provinceName || null,
+        decree: item.decree || "",
+        level,
+        parentCode: parentCode ? String(parentCode) : null,
+        uniqueKey,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
       try {
-        await Unit.create({
-          name: province.name,
-          code: province.code,
-          level: "province",
-          parentCode: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+        await Unit.create(doc);
       } catch (err) {
         if (err.code === 11000) {
-          console.warn(`⚠️ Duplicate province code: ${province.code} - ${province.name}`);
-          continue;
+          console.warn(`⚠️ Duplicate ${level} code: ${item.code} (${item.name})`);
+        } else {
+          console.error(`❌ Error creating ${level} ${item.name}:`, err.message);
         }
-        throw err;
       }
+    };
 
-      // 👉 Thêm cấp huyện/quận (nếu có)
-      if (province.districts && Array.isArray(province.districts)) {
-        for (const district of province.districts) {
-          try {
-            await Unit.create({
-              name: district.name,
-              code: district.code,
-              level: "district",
-              parentCode: province.code,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-          } catch (err) {
-            if (err.code === 11000) {
-              console.warn(`⚠️ Duplicate district code: ${district.code} - ${district.name}`);
-              continue;
-            }
-            throw err;
-          }
+    // ===================================
+    // 🔁 Bắt đầu import dữ liệu
+    // ===================================
+    for (const province of jsonData) {
+      await createUnit(province, "province");
 
-          // 👉 Thêm cấp xã/phường dưới huyện
-          if (district.communes && Array.isArray(district.communes)) {
-            for (const commune of district.communes) {
-              try {
-                await Unit.create({
-                  name: commune.name,
-                  code: commune.code,
-                  level: "commune",
-                  parentCode: district.code,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                });
-              } catch (err) {
-                if (err.code === 11000) {
-                  console.warn(`⚠️ Duplicate commune code: ${commune.code} - ${commune.name}`);
-                  continue;
-                }
-                throw err;
-              }
+      // 🏙️ Huyện/Quận
+      const districtsList =
+        province.districts || province.children || province.wards || [];
+
+      if (Array.isArray(districtsList)) {
+        for (const district of districtsList) {
+          await createUnit(district, "district", province.code, province.name);
+
+          // 🏘️ Xã/Phường/Thị trấn thuộc huyện
+          const communesList =
+            district.communes || district.wards || district.children || [];
+
+          if (Array.isArray(communesList)) {
+            for (const commune of communesList) {
+              await createUnit(commune, "commune", district.code, district.name);
             }
           }
         }
       }
 
-      // 👉 Thêm cấp xã/phường trực tiếp dưới tỉnh (nếu không có huyện)
-      if (province.communes && Array.isArray(province.communes)) {
-        for (const commune of province.communes) {
-          try {
-            await Unit.create({
-              name: commune.name,
-              code: commune.code,
-              level: "commune",
-              parentCode: province.code,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-          } catch (err) {
-            if (err.code === 11000) {
-              console.warn(`⚠️ Duplicate commune code: ${commune.code} - ${commune.name}`);
-              continue;
-            }
-            throw err;
-          }
+      // 🏡 Xã trực thuộc tỉnh (nếu không có huyện)
+      const provinceCommunes =
+        province.communes || province.wards || province.children || [];
+
+      if (Array.isArray(provinceCommunes)) {
+        for (const commune of provinceCommunes) {
+          await createUnit(commune, "commune", province.code, province.name);
         }
       }
     }

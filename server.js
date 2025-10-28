@@ -8,6 +8,7 @@ import convertRoutes from "./server/routes/convert.js";
 import unitsRoutes from "./server/routes/units.js";
 import searchRoutes from "./server/routes/search.js";
 import treeRoutes from "./server/routes/tree.js";
+import districtRoutes from "./server/routes/districts.js";
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./server/middleware/errorHandler.js";
 // Load biến môi trường
@@ -40,6 +41,7 @@ app.use("/communes", communeRoutes);
 app.use("/convert", convertRoutes);
 app.use("/search", searchRoutes);
 app.use("/tree", treeRoutes);
+app.use("/districts", districtRoutes);
 // --- XỬ LÝ LỖI CHUNG ---
 // 404 handler must be after all routes
 app.use(notFoundHandler);
@@ -56,5 +58,6 @@ app.listen(PORT, () => {
   console.log("   • GET    /communes");
   console.log("   • POST   /convert");
   console.log("   • CRUD   /units");
+  console.log("   • GET    /districts");
 });
 export default app;

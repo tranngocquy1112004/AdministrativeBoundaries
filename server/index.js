@@ -4,6 +4,7 @@ import provinceRoutes from "./routes/provinces.js";
 import communeRoutes from "./routes/communes.js";
 import convertRoutes from "./routes/convert.js";
 import unitsRoutes from "./routes/units.js";
+import districtRoutes from "./routes/districts.js";
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -11,6 +12,7 @@ app.use("/provinces", provinceRoutes);
 app.use("/communes", communeRoutes);
 app.use("/convert", convertRoutes);
 app.use("/units", unitsRoutes);
+app.use("/districts", districtRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "Cas AddressKit API Proxy ✅",

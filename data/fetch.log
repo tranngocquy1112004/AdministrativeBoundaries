@@ -184,3 +184,9 @@ newlines
 [2025-10-24T09:32:02.586Z] ERROR: Error 1
 [2025-10-24T09:32:02.586Z] INFO: Info 2
 [2025-10-24T09:32:02.586Z] ERROR: Error 2
+[2025-10-28T03:20:06.310Z] INFO: 🔁 Đang tải toàn bộ dữ liệu hành chính 3 cấp (phiên bản cũ trước 07/2025)...
+[2025-10-28T03:20:06.517Z] INFO: ✅ Lấy thành công 63 tỉnh/thành
+[2025-10-28T03:20:06.531Z] INFO: 💾 Đã lưu dữ liệu đầy đủ vào C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\data\full-address.json
+[2025-10-28T03:22:27.822Z] INFO: 🔁 Đang tải toàn bộ dữ liệu hành chính 3 cấp (phiên bản cũ trước 07/2025)...
+[2025-10-28T03:22:28.054Z] INFO: ✅ Lấy thành công 63 tỉnh/thành
+[2025-10-28T03:22:28.070Z] INFO: 💾 Đã lưu dữ liệu đầy đủ vào C:\Users\Quy\Desktop\AlojoBooking\AdministrativeBoundaries\data\full-address.json
