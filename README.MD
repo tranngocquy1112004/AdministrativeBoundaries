@@ -5,7 +5,7 @@
 ## 📋 Tổng quan dự án
 
 Dự án này xây dựng một **API RESTful** để quản lý dữ liệu hành chính Việt Nam, bao gồm:
-- **34 tỉnh/thành phố**
+- **63 tỉnh/thành phố**
 - **Hàng nghìn quận/huyện** 
 - **Hàng chục nghìn phường/xã**
 
@@ -50,7 +50,7 @@ npm run start
 
 ### **2. Fetch dữ liệu từ API**
 ```bash
-# Lấy dữ liệu mới nhất từ address-kit API
+# Lấy dữ liệu mới nhất từ provinces.open-api.vn (depth=3, cấu trúc 3 cấp cũ)
 npm run fetch
 ```
 
@@ -79,12 +79,12 @@ AdministrativeBoundaries/
 │   │   ├── searchController.js          # Tìm kiếm - search units theo name/level/code
 │   │   └── treeController.js            # Cây phân cấp - build hierarchical tree structure
 │   ├── 📁 models/                       # MongoDB schemas
-│   │   ├── Unit.js                      # Schema đơn vị hành chính - chính, có soft delete
-│   │   ├── UnitHistory.js               # Schema lịch sử thay đổi - track mọi thay đổi
-│   │   └── Address.js                   # Schema địa chỉ - backup schema cho import
+│   │   ├── Unit.js                      # Schema đơn vị - code không unique, dùng uniqueKey
+│   │   └── UnitHistory.js               # Schema lịch sử thay đổi - track mọi thay đổi
 │   ├── 📁 routes/                       # API endpoints routing
 │   │   ├── provinces.js                 # /provinces - GET danh sách tỉnh
 │   │   ├── communes.js                  # /communes - CRUD communes với history
+│   │   ├── districts.js                 # /districts - CRUD districts với soft delete & restore
 │   │   ├── units.js                     # /units - CRUD operations với validation
 │   │   ├── convert.js                   # /convert - POST address conversion
 │   │   ├── search.js                    # /search - GET search với query params
@@ -97,12 +97,11 @@ AdministrativeBoundaries/
 │   │   ├── db.js                        # Kết nối MongoDB - connectDB function
 │   │   ├── finder.js                    # Tìm kiếm trong JSON - buildTree function
 │   │   ├── loader.js                    # Load dữ liệu - loadData từ JSON
-│   │   └── response.js                  # Format response - (empty file)
+│   │   └── response.js                  # Format response - (empty file, placeholder)
 │   └── 📁 scripts/                      # Import scripts
-│       ├── importAddress.js             # Import địa chỉ - import vào Address collection
 │       └── importUnits.js               # Import đơn vị - import vào Unit collection
 ├── 📁 fetcher/                          # Data fetching system
-│   ├── index.js                         # Fetch từ API - lấy data từ address-kit API
+│   ├── index.js                         # Fetch từ provinces.open-api.vn (depth=3) → full-address.json
 │   └── schedule.js                      # Cron job - auto update hàng ngày lúc 3:00 AM
 ├── 📁 data/                             # Data storage
 │   ├── full-address.json                # Dữ liệu JSON backup - 30k+ records
@@ -193,6 +192,18 @@ POST   /communes/:communeCode/restore      # Khôi phục commune đã xóa
 - Restore từ lịch sử
 - Tự động cập nhật cả MongoDB và JSON files
 - Lưu history vào unit_histories collection
+
+### **Districts (Quận/Huyện) - CRUD đầy đủ**
+```http
+GET    /districts                       # Tất cả quận/huyện
+GET    /districts/:districtCode         # Chi tiết quận/huyện
+GET    /districts/deleted/list          # Danh sách quận/huyện đã xóa
+POST   /districts                       # Tạo quận/huyện mới
+PUT    /districts/:districtCode         # Cập nhật quận/huyện
+DELETE /districts/:districtCode         # Soft delete quận/huyện
+POST   /districts/:districtCode/restore # Khôi phục quận/huyện đã xóa
+```
+**Đặc điểm**: Cùng cơ chế soft delete/restore như communes; expose đầy đủ REST methods
 
 ### **Units (CRUD Operations)**
 ```http
@@ -373,32 +384,30 @@ npm run test:debug
 
 ### **Data Files Structure**
 
-#### **full-address.json** (30,197 lines)
+#### **full-address.json** (nguồn provinces.open-api.vn)
 ```json
 [
   {
-    "code": "01",
     "name": "Thành phố Hà Nội",
-    "englishName": "",
-    "administrativeLevel": "Thành phố Trung ương",
-    "decree": "",
-    "communes": [
+    "code": 1,
+    "codename": "thanh_pho_ha_noi",
+    "division_type": "tỉnh",
+    "districts": [
       {
-        "code": "00004",
-        "name": "Phường Ba Đình",
-        "englishName": "",
-        "administrativeLevel": "Phường",
-        "provinceCode": "01",
-        "provinceName": "Thành phố Hà Nội",
-        "decree": "Số: 1656/NQ-UBTVQH15; Ngày: 16/06/2025"
+        "name": "Quận Ba Đình",
+        "code": 1,
+        "wards": [
+          { "name": "Phường Phúc Xá", "code": 1 },
+          { "name": "Phường Trúc Bạch", "code": 4 }
+        ]
       }
     ]
   }
 ]
 ```
-**Mô tả**: Dữ liệu chính chứa 34 tỉnh/thành phố và hàng chục nghìn communes  
-**Cấu trúc**: Hierarchical structure với provinces chứa communes  
-**Kích thước**: ~30k records, được fetch từ address-kit API
+**Mô tả**: Dữ liệu chính chứa 63 tỉnh/thành và đầy đủ quận/huyện, phường/xã  
+**Cấu trúc**: 3 cấp: province → districts → wards (map thành communes trong hệ thống)  
+**Nguồn**: `https://provinces.open-api.vn/api/v1/?depth=3`
 
 #### **history.json** (256 lines)
 ```json
@@ -467,7 +476,10 @@ GET /
   "endpoints": {
     "provinces": "/provinces",
     "communes": "/communes",
+    "districts": "/districts",
     "convert": "/convert",
+    "search": "/search",
+    "tree": "/tree",
     "units": "/units"
   }
 }
@@ -478,26 +490,24 @@ GET /
 
 ### **1. Fetch Process (Lấy dữ liệu từ API)**
 ```
-External API (address-kit) → fetcher/index.js → data/full-address.json
+External API (provinces.open-api.vn depth=3) → fetcher/index.js → data/full-address.json
 ```
 **Chi tiết**:
-- Gọi API `https://production.cas.so/address-kit/latest/provinces`
-- Lấy danh sách 34 tỉnh/thành phố
-- Với mỗi tỉnh, gọi API để lấy communes
-- Lưu toàn bộ vào `data/full-address.json` (30k+ records)
+- Gọi API `https://provinces.open-api.vn/api/v1/?depth=3`
+- Lấy danh sách 63 tỉnh/thành phố cùng đầy đủ districts và wards
+- Lưu toàn bộ vào `data/full-address.json`
 - Log operations vào `data/fetch.log`
 
 ### **2. Import Process (Import vào MongoDB)**
 ```
 JSON File → scripts/importUnits.js → MongoDB Unit Collection
-JSON File → scripts/importAddress.js → MongoDB Address Collection
 ```
 **Chi tiết**:
-- Đọc `data/full-address.json`
-- Parse hierarchical structure (province → district → commune)
-- Import vào MongoDB với proper relationships
-- Handle duplicate codes với error logging
-- Clear old data trước khi import
+- Đọc `data/full-address.json` (province/district/ward)
+- Map ward → commune khi import
+- Tạo `uniqueKey = level + '-' + code` và tạo unique index cho trường này
+- `code` không còn unique; xử lý trùng code theo từng cấp bằng `uniqueKey`
+- Import theo thứ tự: province → district → commune; clear dữ liệu cũ trước khi import
 
 ### **3. API Request Flow (Luồng xử lý request)**
 ```
@@ -667,8 +677,7 @@ CMD ["npm", "start"]
 ```
 
 #### **Address.js**
-- Backup schema cho import operations
-- Similar structure to Unit nhưng cho Address collection
+- Không sử dụng trong phiên bản hiện tại
 
 ### **Middleware**
 
@@ -705,10 +714,15 @@ CMD ["npm", "start"]
 
 ### **Scripts**
 
-#### **importUnits.js**
-- **Function**: Import JSON data to MongoDB Unit collection
-- **Features**: Hierarchical import, duplicate handling, error logging
-- **Process**: Clear old data → Import provinces → Import districts → Import communes
+#### **importUnits.js** (cập nhật theo dữ liệu 63 tỉnh - 3 cấp)
+- **Function**: Import JSON data (depth=3) vào MongoDB `Unit`
+- **Nguồn dữ liệu**: `data/full-address.json` lấy từ API provinces.open-api.vn
+- **Mapping**:
+  - Province → level="province"
+  - Districts → level="district", `parentCode` = `province.code`
+  - Wards (API) → map thành level="commune", `parentCode` = `district.code`
+- **Khóa duy nhất**: `uniqueKey = level + '-' + code`; `code` không còn unique
+- **Quy trình**: Clear toàn bộ → tạo index cho `uniqueKey` → import theo thứ tự province → district → commune
 
 #### **importAddress.js**
 - **Function**: Import JSON data to MongoDB Address collection
@@ -717,10 +731,10 @@ CMD ["npm", "start"]
 
 ### **Fetcher**
 
-#### **index.js**
-- **Functions**: `fetchProvinces()`, `fetchCommunesByProvince()`, `fetchAllData()`
-- **Features**: API integration, error handling, logging
-- **Process**: Fetch provinces → Fetch communes for each → Save to JSON
+#### **index.js** (fetcher)
+- **Function**: `fetchAllData()` tải 63 tỉnh/thành với 3 cấp độ (province/district/ward)
+- **API**: `https://provinces.open-api.vn/api/v1/?depth=3`
+- **Output**: Lưu toàn bộ JSON vào `data/full-address.json`
 
 #### **schedule.js**
 - **Function**: Cron job setup
