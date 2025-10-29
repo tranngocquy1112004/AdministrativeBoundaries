@@ -68,6 +68,17 @@ export async function getCommunes(req, res) {
 
     provinces.forEach((p) => {
       p.districts?.forEach((d) => {
+        // Fix: JSON data uses 'wards' not 'communes'
+        if (Array.isArray(d.wards)) {
+          d.wards.forEach((c) =>
+            allCommunes.push({
+              ...c,
+              parentCode: d.code,
+              provinceCode: p.code,
+            })
+          );
+        }
+        // Keep backward compatibility
         if (Array.isArray(d.communes)) {
           d.communes.forEach((c) =>
             allCommunes.push({
@@ -134,9 +145,10 @@ export async function getCommuneByCode(req, res) {
         const found = p.communes.find((c) => String(c.code) === codeStr);
         if (found) return res.json(found);
       }
-      // communes under districts
+      // communes under districts (fix: JSON uses 'wards' not 'communes')
       for (const d of p.districts || []) {
-        const found = d.communes?.find((c) => String(c.code) === codeStr);
+        const found = d.wards?.find((c) => String(c.code) === codeStr) || 
+                     d.communes?.find((c) => String(c.code) === codeStr);
         if (found) return res.json(found);
       }
     }
