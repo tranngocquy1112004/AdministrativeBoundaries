@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import { connectDB } from "./server/v1/utils/db.js";
 // Import routes
 import v1Routes from "./server/v1/index.js";
@@ -15,6 +16,7 @@ connectDB();
 // Khởi tạo Express
 const app = express();
 // Middleware
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Đọc body JSON
 app.use(express.urlencoded({ extended: true })); // Hỗ trợ form-urlencoded nếu cần
 
