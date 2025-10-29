@@ -89,6 +89,7 @@ export async function getCommuneByCode(req, res) {
 
     // 1) Try match in MongoDB using $expr to compare string values (safe even if stored as number or string)
     const commune = await Unit.findOne({
+      schemaVersion: 'v2',
       level: "commune",
       $expr: { $eq: [{ $toString: "$code" }, codeStr] },
       $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }],

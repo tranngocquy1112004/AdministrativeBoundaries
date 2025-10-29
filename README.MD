@@ -71,97 +71,119 @@ npm run schedule
 ```
 AdministrativeBoundaries/
 ├── 📁 server/                           # Core API server
-│   ├── 📁 controllers/                  # Business logic layer
-│   │   ├── provinceController.js        # Xử lý tỉnh/thành phố - lấy danh sách tỉnh từ MongoDB/JSON
-│   │   ├── communeController.js         # Xử lý xã/phường - CRUD communes với soft delete & restore
-│   │   ├── unitController.js            # CRUD đơn vị hành chính - tạo/sửa/xóa/khôi phục units
-│   │   ├── convertController.js         # Chuyển đổi địa chỉ - parse địa chỉ tự nhiên thành mã
-│   │   ├── searchController.js          # Tìm kiếm - search units theo name/level/code
-│   │   └── treeController.js            # Cây phân cấp - build hierarchical tree structure
-│   ├── 📁 models/                       # MongoDB schemas
-│   │   ├── Unit.js                      # Schema đơn vị - code không unique, dùng uniqueKey
-│   │   └── UnitHistory.js               # Schema lịch sử thay đổi - track mọi thay đổi
-│   ├── 📁 routes/                       # API endpoints routing
-│   │   ├── provinces.js                 # /provinces - GET danh sách tỉnh
-│   │   ├── communes.js                  # /communes - CRUD communes với history
-│   │   ├── districts.js                 # /districts - CRUD districts với soft delete & restore
-│   │   ├── units.js                     # /units - CRUD operations với validation
-│   │   ├── convert.js                   # /convert - POST address conversion
-│   │   ├── search.js                    # /search - GET search với query params
-│   │   └── tree.js                      # /tree - GET hierarchical structure
-│   ├── 📁 middleware/                   # Middleware functions
-│   │   ├── validateUnit.js              # Validation input - kiểm tra name/code/level
-│   │   ├── errorHandler.js              # Xử lý lỗi - global error handler với logging
-│   │   └── cacheMiddleware.js           # Cache layer - (empty file, chưa implement)
-│   ├── 📁 utils/                        # Utility functions
-│   │   ├── db.js                        # Kết nối MongoDB - connectDB function
-│   │   ├── finder.js                    # Tìm kiếm trong JSON - buildTree function
-│   │   ├── loader.js                    # Load dữ liệu - loadData từ JSON
-│   │   └── response.js                  # Format response - (empty file, placeholder)
-│   └── 📁 scripts/                      # Import scripts
-│       └── importUnits.js               # Import đơn vị - import vào Unit collection
+│   ├── index.js                         # Mount v1 and v2 routers, error handlers
+│   ├── 📁 v1/
+│   │   ├── index.js                     # Router gộp cho v1
+│   │   ├── 📁 controllers/              # Business logic layer (v1 - 3 cấp)
+│   │   │   ├── provinceController.js
+│   │   │   ├── districtController.js
+│   │   │   ├── communeController.js
+│   │   │   ├── unitController.js
+│   │   │   ├── convertController.js
+│   │   │   ├── searchController.js
+│   │   │   └── treeController.js
+│   │   ├── 📁 routes/                   # API endpoints routing (v1)
+│   │   │   ├── provinces.js
+│   │   │   ├── districts.js
+│   │   │   ├── communes.js
+│   │   │   ├── units.js
+│   │   │   ├── convert.js
+│   │   │   ├── search.js
+│   │   │   └── tree.js
+│   │   ├── 📁 models/                   # MongoDB schemas (shared for v1/v2)
+│   │   │   ├── Unit.js
+│   │   │   └── UnitHistory.js
+│   │   ├── 📁 middleware/               # Middlewares (v1)
+│   │   │   ├── errorHandler.js
+│   │   │   ├── validateUnit.js
+│   │   │   └── cacheMiddleware.js       # placeholder
+│   │   ├── 📁 utils/                    # Utilities (v1)
+│   │   │   ├── db.js
+│   │   │   └── logger.js
+│   │   └── 📁 scripts/
+│   │       └── importUnits.js           # Import dữ liệu v1 (depth=3)
+│   ├── 📁 v2/
+│   │   ├── index.js                     # placeholder (router tổng v2 nếu cần)
+│   │   ├── 📁 controllers/              # Business logic layer (v2 - 2 cấp)
+│   │   │   ├── provinceController.js
+│   │   │   └── communeController.js
+│   │   ├── 📁 routes/                   # API endpoints routing (v2)
+│   │   │   ├── provinces.js
+│   │   │   └── communes.js
+│   │   ├── 📁 utils/
+│   │   │   └── loader.js                # Nạp cache từ full-address-v2.json
+│   │   └── 📁 scripts/
+│   │       ├── importUnits.js           # (bản v2 trong thư mục này)
+│   │       └── scripts copy/importUnits.js
+│   └── 📁 scripts/
+│       └── importUnits.v2.js            # Import dữ liệu v2 (depth=2)
 ├── 📁 fetcher/                          # Data fetching system
-│   ├── index.js                         # Fetch từ provinces.open-api.vn (depth=3) → full-address.json
-│   └── schedule.js                      # Cron job - auto update hàng ngày lúc 3:00 AM
+│   ├── 📁 v1/
+│   │   └── index.js                     # Fetch depth=3 → data/full-address.json
+│   ├── 📁 v2/
+│   │   └── index.js                     # Fetch depth=2 → data/full-address-v2.json
+│   ├── schedule.js                      # Cron 03:00 gọi fetch v1
+│   └── 📁 utils/                         # (placeholder)
 ├── 📁 data/                             # Data storage
-│   ├── full-address.json                # Dữ liệu JSON backup - 30k+ records
-│   ├── full-address-backup.json         # Backup file
-│   ├── history.json                     # Lịch sử thay đổi - track deleted items
-│   ├── units.json                       # Units data backup
-│   ├── fetch.log                        # Log fetch operations - timestamped logs
-│   └── snapshots/                       # Lịch sử dữ liệu - (empty folder)
+│   ├── full-address.json                # V1 JSON (depth=3)
+│   ├── full-address-v2.json             # V2 JSON (depth=2)
+│   ├── full-address-backup.json         # Backup
+│   ├── history.json                     # Nhật ký thao tác JSON
+│   ├── units.json                       # Backup units
+│   ├── fetch.log                        # Log fetch operations
+│   └── snapshots/                       # Snapshot dữ liệu (nếu dùng)
 ├── 📁 tests/                            # Comprehensive test suite
-│   ├── 📁 server/                       # API endpoint tests
-│   │   ├── units.test.js                # CRUD operations test - 700+ lines
-│   │   ├── communes.test.js             # Commune operations test
-│   │   ├── provinces.test.js            # Province operations test
-│   │   ├── convert.test.js              # Address conversion test
-│   │   ├── search.test.js               # Search functionality test
-│   │   ├── tree.test.js                 # Tree structure test
-│   │   ├── history.test.js              # History tracking test
-│   │   └── unitController.test.js       # Unit controller test
-│   ├── 📁 integration/                  # Integration tests
-│   │   ├── fullFlow.test.js             # End-to-end workflow test
-│   │   └── syncJsonMongo.test.js        # JSON-MongoDB sync test
-│   ├── 📁 middleware/                   # Middleware tests
-│   │   ├── validateUnit.test.js         # Validation middleware test
-│   │   ├── errorHandler.test.js         # Error handling test
-│   │   └── cacheMiddleware.test.js      # Cache middleware test
-│   ├── 📁 utils/                        # Utility function tests
-│   │   ├── db.test.js                   # Database connection test
-│   │   ├── file.test.js                 # File operations test
-│   │   ├── finder.test.js               # Finder utility test
-│   │   ├── loader.test.js               # Data loader test
-│   │   ├── logger.test.js               # Logging system test
-│   │   └── response.test.js             # Response formatting test
-│   ├── 📁 scripts/                      # Import script tests
-│   │   ├── importAddress.test.js        # Address import test
-│   │   └── importUnits.test.js          # Units import test
-│   ├── 📁 fetcher/                      # Data fetching tests
-│   │   ├── index.test.js                # Fetcher functionality test
-│   │   └── schedule.test.js             # Cron job test
-│   ├── 📁 performance/                  # Performance tests
-│   │   └── bulkInsert.test.js           # Bulk operations test
-│   └── 📁 utils/                        # Test utilities
-│       └── testCleanup.js               # Test cleanup helper
+│   ├── 📁 server/
+│   │   ├── units.test.js
+│   │   ├── communes.test.js
+│   │   ├── provinces.test.js
+│   │   ├── convert.test.js
+│   │   ├── search.test.js
+│   │   ├── tree.test.js
+│   │   ├── history.test.js
+│   │   └── unitController.test.js
+│   ├── 📁 integration/
+│   │   ├── fullFlow.test.js
+│   │   └── syncJsonMongo.test.js
+│   ├── 📁 middleware/
+│   │   ├── validateUnit.test.js
+│   │   ├── errorHandler.test.js
+│   │   └── cacheMiddleware.test.js
+│   ├── 📁 utils/
+│   │   ├── db.test.js
+│   │   ├── file.test.js
+│   │   ├── finder.test.js
+│   │   ├── loader.test.js
+│   │   ├── logger.test.js
+│   │   └── response.test.js
+│   ├── 📁 scripts/
+│   │   ├── importAddress.test.js
+│   │   └── importUnits.test.js
+│   ├── 📁 fetcher/
+│   │   ├── index.test.js
+│   │   └── schedule.test.js
+│   ├── 📁 performance/
+│   │   └── bulkInsert.test.js
+│   └── 📁 utils/
+│       └── testCleanup.js
 ├── 📁 utils/                            # Shared utilities
-│   ├── file.js                          # File operations - saveJSON/loadJSON
-│   └── logger.js                        # Logging system - logInfo/logError
-├── 📁 coverage/                         # Test coverage reports
-│   ├── lcov-report/                     # HTML coverage reports
-│   ├── clover.xml                       # XML coverage format
-│   ├── coverage-final.json              # JSON coverage data
-│   └── lcov.info                        # LCOV coverage format
-├── server.js                            # Main server file - Express app setup
-├── package.json                         # Dependencies & scripts - ES modules
-├── jest.config.js                       # Jest configuration - Node environment
-├── jest.setup.js                        # Jest setup file
-├── jest.global-setup.js                 # Global test setup
-├── jest.global-teardown.js              # Global test teardown
-├── cross-env                            # Cross-platform environment variables
-├── docs.txt                             # Development notes & changelog
-├── tests.txt                            # Test documentation
-└── README.md                            # This documentation
+│   ├── file.js
+│   └── logger.js
+├── 📁 coverage/
+│   ├── lcov-report/
+│   ├── clover.xml
+│   ├── coverage-final.json
+│   └── lcov.info
+├── server.js                            # Express app setup (mount v1/v2, errors)
+├── package.json
+├── jest.config.js
+├── jest.setup.js
+├── jest.global-setup.js
+├── jest.global-teardown.js
+├── cross-env
+├── docs.txt
+├── tests.txt
+└── README.md
 ```
 
 ## 🔧 API Endpoints chi tiết
@@ -776,3 +798,157 @@ ISC License
 ---
 
 **🌏 Administrative Boundaries API** - Quản lý dữ liệu hành chính Việt Nam một cách hiệu quả và tin cậy.
+
+## 📚 Phụ lục: Chi tiết folder → file → chức năng
+
+Lưu ý: Danh sách dưới đây liệt kê từng file chính trong dự án và mô tả ngắn gọn chức năng, kèm các hàm/export tiêu biểu (nếu có).
+
+### 1) Root
+- `server.js`: Khởi tạo Express, nạp biến môi trường, kết nối MongoDB (`connectDB()`), gắn router `v1` và `v2`, nạp cache `v2` (`loadV2Cache()`), cấu hình `notFoundHandler` và `errorHandler`, lắng nghe cổng.
+- `package.json`: Scripts (test, start, fetch, import, schedule), dependencies (express, mongoose, node-fetch, node-cron, dotenv).
+- `Dockerfile`: Cấu hình image Node 18, cài dependencies và chạy server.
+- `docker-compose.yml`: (Nếu dùng) setup dịch vụ container (không bắt buộc).
+- `README.MD`: Tài liệu dự án (file này).
+- `docs.txt`, `tests.txt`: Ghi chú phát triển và tóm tắt tests.
+- `.env` (không commit): Cấu hình môi trường (MONGODB_URI, PORT,...).
+
+### 2) Data
+- `data/full-address.json`: Dữ liệu provinces API (depth=3: province → districts → communes/wards) cho phiên bản v1.
+- `data/full-address-v2.json`: Dữ liệu provinces API (depth=2: province → wards) cho phiên bản v2 (map ward → commune).
+- `data/history.json`: Nhật ký thao tác (soft delete, restore) dạng JSON.
+- `data/units.json`: Backup units (fallback/phục hồi).
+- `data/fetch.log`: Log thao tác fetch theo thời gian.
+- `data/snapshots/`: Thư mục snapshot (lưu theo thời điểm, nếu dùng).
+
+### 3) Shared utils
+- `utils/file.js`
+  - `saveJSON(path, data)`: Ghi đối tượng vào JSON.
+  - `loadJSON(path)`: Đọc file JSON thành object/array.
+- `utils/logger.js`
+  - `logInfo(msg)`, `logError(msg)`: Ghi log định dạng `[ISO_TIMESTAMP] LEVEL: message` vào `data/fetch.log` và console.
+
+### 4) Fetcher
+- `fetcher/v1/index.js`
+  - HÀM: `fetchAllData()` gọi `https://provinces.open-api.vn/api/v1/?depth=3` → lưu `data/full-address.json` (v1) và log tiến trình.
+  - Chạy trực tiếp khi gọi file (`node fetcher/v1/index.js`).
+- `fetcher/v2/index.js`
+  - HÀM: `fetchV2()` gọi `https://provinces.open-api.vn/api/v2/?depth=2` → lưu `data/full-address-v2.json` (v2) và log tiến trình.
+  - Export default `fetchV2`; chạy trực tiếp khi gọi file.
+- `fetcher/schedule.js`
+  - Lên lịch cron `0 3 * * *` (03:00 AM) gọi `fetchAllData()` (v1). Bỏ qua khi `NODE_ENV=test`.
+
+### 5) Server (v1)
+- `server/v1/index.js`: Router gốc cho v1, mount các nhóm route: `/provinces`, `/communes`, `/districts`, `/units`, `/search`, `/tree`, `/convert`.
+
+- Controllers (`server/v1/controllers/`)
+  - `provinceController.js`
+    - `getProvinces(req,res)`: Lấy toàn bộ tỉnh (kèm 3 cấp) từ MongoDB (ưu tiên) hoặc JSON fallback.
+    - `getProvinceByCode(req,res)`: Lấy chi tiết tỉnh theo `provinceCode` (3 cấp) từ Mongo hoặc JSON.
+    - `getProvinceById(req,res)`: Lấy chi tiết tỉnh theo `_id` Mongo (kèm huyện/xã).
+    - `createProvince(req,res)`: Tạo mới tỉnh, đồng bộ Mongo + cập nhật JSON.
+    - `updateProvince(req,res)`: Cập nhật thuộc tính tỉnh, đồng bộ JSON.
+    - `deleteProvince(req,res)`: Soft delete tỉnh, lưu `UnitHistory`, cập nhật JSON.
+    - `restoreProvince(req,res)`: Khôi phục tỉnh đã xóa, thêm lại vào JSON nếu thiếu.
+    - `getDeletedProvinces(req,res)`: Liệt kê các tỉnh đã xóa (soft).
+  - `districtController.js`
+    - `getDistricts(req,res)`: Lấy huyện (toàn bộ/thuộc tỉnh). Mongo ưu tiên, fallback JSON.
+    - `getDistrictByCode(req,res)`: Chi tiết huyện theo `districtCode` từ Mongo hoặc JSON.
+    - `createDistrict(req,res)`: Tạo huyện mới (Mongo + JSON).
+    - `updateDistrict(req,res)`: Cập nhật huyện (Mongo + JSON).
+    - `deleteDistrict(req,res)`: Soft delete, lưu history, xoá trong JSON.
+    - `restoreDistrict(req,res)`: Gỡ `isDeleted`, thêm lại JSON nếu thiếu.
+    - `getDeletedDistricts(req,res)`: Danh sách huyện đã xóa.
+  - `communeController.js`
+    - `getCommunes(req,res)`: Lấy xã/phường (toàn bộ/thuộc tỉnh). Mongo ưu tiên, fallback JSON (gộp xã dưới huyện hoặc trực thuộc tỉnh).
+    - `getCommuneByCode(req,res)`: Lấy xã theo mã, so khớp an toàn bằng `$expr` (string-compare), fallback JSON.
+    - `createCommune(req,res)`: Tạo xã mới, sinh `uniqueKey`, cập nhật JSON đúng cấp cha.
+    - `updateCommune(req,res)`: Cập nhật xã, đồng bộ JSON (tìm và `Object.assign`).
+    - `deleteCommune(req,res)`: Soft delete, lưu `UnitHistory`.
+    - `restoreCommune(req,res)`: Khôi phục xã đã xóa.
+    - `getDeletedCommunes(req,res)`: Danh sách xã đã xóa.
+    - `getHistoryCommunes(req,res)`: Lịch sử thay đổi cấp xã.
+    - `getHistoryByCode(req,res)`: Lịch sử thay đổi theo mã xã.
+  - `unitController.js`
+    - `createUnit(req,res)`: Tạo đơn vị (province/commune). Trong test: chỉ Mongo; bình thường: JSON + Mongo + `UnitHistory`.
+    - `updateUnit(req,res)`: Cập nhật đơn vị. Test: Mongo; bình thường: JSON (tìm target) + Mongo (upsert) + `UnitHistory`.
+    - `deleteUnit(req,res)`: Xóa đơn vị. Test: xóa Mongo; bình thường: xóa khỏi JSON, xóa Mongo, ghi `UnitHistory`.
+    - `getHistory(req,res)`: Lấy `UnitHistory` theo code.
+    - `restoreFromHistory(req,res)`: Khôi phục từ bản ghi history, đồng bộ JSON + Mongo và lưu thêm bản ghi `restore`.
+    - `getUnitById(req,res)`: Lấy chi tiết đơn vị theo `code`, ưu tiên Mongo, fallback JSON.
+  - `convertController.js`
+    - `convertAddress(req,res)`: Chuẩn hóa chuỗi, tra MongoDB theo thứ tự province → district → commune; nếu thiếu thì fallback JSON; trả về `result` và `codes`.
+  - `searchController.js`
+    - `searchUnits(req,res)`: Tìm theo `name` (regex), `level`, `code`; giới hạn 50.
+  - `treeController.js`
+    - `getTree(req,res)`: Xây cây phân cấp từ bảng `Unit` theo `parentCode`.
+
+- Routes (`server/v1/routes/`)
+  - `provinces.js`: Map endpoints → provinceController: GET `/`, `/:provinceCode`, `/id/:id`, POST `/`, PUT `/:provinceCode`, DELETE `/:provinceCode`, PATCH `/restore/:provinceCode`, GET `/deleted/list`.
+  - `districts.js`: GET `/`, GET `/deleted/list`, GET `/:districtCode`, POST `/`, PUT `/:districtCode`, DELETE `/:districtCode`, POST `/:districtCode/restore`.
+  - `communes.js`: GET `/`, GET `/deleted/list`, GET `/history`, GET `/history/:communeCode`, GET `/:communeCode`, POST `/`, POST `/:communeCode`, PUT `/:communeCode`, DELETE `/:communeCode`, POST `/:communeCode/restore`.
+  - `units.js`: POST `/`, PUT `/:code`, DELETE `/:code`, GET `/:code`, GET `/:code/history`, POST `/:code/restore`.
+  - `convert.js`: POST `/` → `convertAddress`.
+  - `search.js`: GET `/` → `searchUnits`.
+  - `tree.js`: GET `/` → `getTree`.
+
+- Middleware (`server/v1/middleware/`)
+  - `errorHandler.js`
+    - `notFoundHandler(req,res)`: Trả 404 cho route không tồn tại.
+    - `errorHandler(err,req,res,next)`: Phân loại và trả lỗi có cấu trúc, hỗ trợ hiển thị stack trong development.
+  - `validateUnit.js`: Kiểm tra body đầu vào với các trường `name`, `code`, `level` (province/district/commune).
+  - `cacheMiddleware.js`: Placeholder (chưa triển khai).
+
+- Models (`server/v1/models/`)
+  - `Unit.js`: Schema `Unit` (v1/v2 chung), các trường: `schemaVersion`, `name`, `code`, `level`, `parentCode`, `provinceCode`, `provinceName`, `uniqueKey` (unique), `isDeleted`, timestamps, indexes (`schemaVersion, level, parentCode`).
+  - `UnitHistory.js`: Schema lịch sử thay đổi: `code`, `action` (create/update/delete/restore), `oldData`, `newData`, `deleted`, `changedAt`, `changedBy`, timestamps; index `{ code, changedAt }`.
+
+- Utils (`server/v1/utils/`)
+  - `db.js`: `connectDB()` đọc `MONGODB_URI`, kết nối mongoose, log trạng thái.
+  - `logger.js`: Re-export `logInfo`, `logError` từ `utils/logger.js` dùng chung.
+
+- Scripts (`server/v1/scripts/`)
+  - `importUnits.js`: Import dữ liệu từ `data/full-address.json` → MongoDB `Unit` với `schemaVersion='v1'`. Tạo index, xoá cũ, duyệt province → district → commune; tạo `uniqueKey` chuẩn hoá.
+
+### 6) Server (v2)
+- Routes (`server/v2/routes/`)
+  - `provinces.js`: GET `/` (danh sách tỉnh v2), GET `/:provinceCode`, GET `/:provinceCode/wards` (proxy sang `getCommunes`), POST `/`, PUT `/:provinceCode`, DELETE `/:provinceCode`.
+  - `communes.js`: GET `/`, GET `/:communeCode`, POST `/`, PUT `/:communeCode`, DELETE `/:communeCode`.
+
+- Controllers (`server/v2/controllers/`)
+  - `provinceController.js`
+    - `getProvinces(req,res)`: Lấy tỉnh từ Mongo (`schemaVersion='v2'`) hoặc fallback cache v2.
+    - `getProvinceByCode(req,res)`: Lấy tỉnh + `wards` (map thành communes) từ Mongo; fallback loader cache v2.
+    - `createProvince(req,res)`: Tạo mới tỉnh v2 trong Mongo (tối giản, `uniqueKey` `v2-province-<code>`).
+    - `updateProvince(req,res)`: Cập nhật tỉnh v2 theo code.
+    - `deleteProvince(req,res)`: Xóa tỉnh v2 và các ward (commune) con cùng `schemaVersion='v2'`.
+  - `communeController.js`
+    - `getCommunes(req,res)`: Lấy toàn bộ xã (ward) v2, parent trực tiếp là province; fallback JSON v2.
+    - `getCommuneByCode(req,res)`: Lấy xã theo mã, ưu tiên Mongo, fallback JSON v2.
+    - `createCommune(req,res)`: Tạo xã (ward) mới, sinh `uniqueKey` `v2-commune-<code>`, cập nhật JSON v2.
+    - `updateCommune(req,res)`: Cập nhật xã (ward) trong Mongo + JSON v2.
+    - `deleteCommune(req,res)`: Soft delete + ghi `UnitHistory`.
+    - `restoreCommune(req,res)`: Khôi phục xã đã xóa (Mongo v2).
+    - `getDeletedCommunes/getHistoryCommunes/getHistoryByCode`: Tương tự v1 nhưng cho v2.
+
+- Utils (`server/v2/utils/`)
+  - `loader.js`
+    - `loadV2Cache()`: Đọc `data/full-address-v2.json` vào cache bộ nhớ: provinces, wardsByProvince (Map), wardByCode (Map).
+    - `getV2Provinces()`, `getV2ProvinceByCode(code)`, `getV2WardsByProvince(code)`, `getV2WardByCode(code)`: Truy cập cache đã nạp.
+
+- Khác
+  - `server/v2/index.js`: (trống/placeholder cho router tổng v2 nếu muốn gom lại).
+  - `server/scripts/importUnits.v2.js`: Import `data/full-address-v2.json` → Mongo `Unit` với `schemaVersion='v2'`, tạo `uniqueKey` v2 và index cần thiết, xoá dữ liệu v2 cũ trước khi import.
+
+### 7) Tests (tóm tắt theo thư mục)
+- `tests/server/*.test.js`: Kiểm thử endpoint API (units, communes, provinces, districts, search, tree, convert, history, unitController logic).
+- `tests/integration/*.test.js`: Quy trình end-to-end (fullFlow, sync JSON↔Mongo).
+- `tests/middleware/*.test.js`: Kiểm thử `validateUnit`, `errorHandler`, `cacheMiddleware` (placeholder).
+- `tests/utils/*.test.js`: Kiểm thử `db`, `file`, `finder`, `loader`, `logger`, `response`.
+- `tests/scripts/*.test.js`: Kiểm thử import địa chỉ/đơn vị.
+- `tests/fetcher/*.test.js`: Kiểm thử fetcher v1 và schedule cron.
+- `tests/performance/bulkInsert.test.js`: Kiểm thử hiệu năng bulk insert.
+- `jest.config.js`, `jest.setup.js`, `jest.global-setup.js`, `jest.global-teardown.js`: Cấu hình và bootstrap Jest, môi trường test.
+
+---
+
+Nếu bạn cần tài liệu chi tiết hơn theo dạng API reference cho từng endpoint/hàm, hoặc muốn xuất HTML docs tự động (ví dụ từ JSDoc), có thể mở issue để mình bổ sung generator phù hợp.

@@ -37,6 +37,7 @@ export async function getCommunes(req, res) {
     const provinceCode = req.query.provinceCode || req.params.provinceCode;
 
     const query = {
+      schemaVersion: 'v1',
       level: "commune",
       $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }],
     };
@@ -53,7 +54,7 @@ export async function getCommunes(req, res) {
       query.parentCode = { $in: districtCodes };
     }
 
-    const communes = await Unit.find({ ...query, schemaVersion: 'v1' }).lean();
+    const communes = await Unit.find(query).lean();
 
     if (communes.length > 0) {
       console.log(`✅ Loaded ${communes.length} communes from MongoDB`);
