@@ -1,4 +1,5 @@
 {
     "claudeCodeChat.permissions.yoloMode": true,
-    "CodeGPT.apiKey": "OpenAI"
+    "CodeGPT.apiKey": "OpenAI",
+    "liveServer.settings.port": 5501
 }

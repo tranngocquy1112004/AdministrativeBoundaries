@@ -17,6 +17,9 @@
     "import-units": "node server/v1/scripts/importUnits.js",
     "fetch:v2": "node fetcher/v2/index.js",
     "import-units:v2": "node server/scripts/importUnits.v2.js"
+    ,
+    "sync:units": "node server/scripts/syncUnitsToRemote.js",
+    "verify:sync": "node server/scripts/verifySync.js"
   },
   "keywords": [],
   "author": "",

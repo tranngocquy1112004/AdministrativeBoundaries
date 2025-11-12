@@ -1,0 +1,617 @@
+<script>
+const DEFAULT_DOCTORS = [
+  { id: 101, name: "BS. Nguyen Van A", specialty: "Tam ly nhi", schedule: "T2, T4, T6: 08h-12h" },
+  { id: 102, name: "BS. Tran Thi B", specialty: "Than kinh", schedule: "T3, T5: 13h-17h" },
+  { id: 103, name: "BS. Le Minh C", specialty: "Tam than hoc", schedule: "T2-T7: 14h-18h" },
+  { id: 104, name: "BS. Pham Gia D", specialty: "Nhi khoa", schedule: "T4, T6: 08h-11h" },
+  { id: 105, name: "BS. Vo Quang E", specialty: "Tam van dong", schedule: "T2-T6: 09h-15h" },
+  { id: 106, name: "BS. Dang Thu F", specialty: "Tam ly hanh vi", schedule: "T3, T5: 08h-12h" },
+  { id: 107, name: "BS. Bui Bao G", specialty: "Tri lieu ngon ngu", schedule: "T2, T6: 14h-18h" },
+  { id: 108, name: "BS. Hoang Yen H", specialty: "Tri lieu nghe", schedule: "T3, T7: 08h-12h" },
+  { id: 109, name: "BS. Do Tien I", specialty: "Tam ly lam sang", schedule: "T2-T6: 13h-17h" },
+  { id: 110, name: "BS. Duong Lan J", specialty: "Tri lieu choi", schedule: "T4, T6: 14h-18h" },
+  { id: 111, name: "BS. Nguyen Vu K", specialty: "Than kinh tre em", schedule: "T2-T5: 08h-12h" },
+  { id: 112, name: "BS. Tran An L", specialty: "Tam ly gia dinh", schedule: "T3, T5: 14h-18h" },
+  { id: 113, name: "BS. Le Khanh M", specialty: "Tam van dong", schedule: "T2-T6: 07h-11h" },
+  { id: 114, name: "BS. Pham Thu N", specialty: "Tam ly giao duc", schedule: "T2, T4: 13h-17h" },
+  { id: 115, name: "BS. Vo Bao O", specialty: "Tam ly nhan cach", schedule: "T3, T6: 08h-12h" },
+  { id: 116, name: "BS. Dang Thao P", specialty: "Tam ly cong dong", schedule: "T2-T6: 09h-13h" },
+  { id: 117, name: "BS. Bui Minh Q", specialty: "Tri lieu am nhac", schedule: "T4, T7: 14h-18h" },
+  { id: 118, name: "BS. Hoang Phu R", specialty: "Tri lieu van dong", schedule: "T2, T5: 08h-12h" },
+  { id: 119, name: "BS. Doan My S", specialty: "Tam ly phat trien", schedule: "T3, T5: 13h-17h" },
+  { id: 120, name: "BS. Luong Nam T", specialty: "Tam ly hanh vi", schedule: "T2-T6: 15h-19h" }
+];
+
+const DEFAULT_PATIENTS = [
+  { id: 201, name: "Be Minh Anh", age: 6, parentId: 9001 },
+  { id: 202, name: "Be Bao Chau", age: 8, parentId: 9002 },
+  { id: 203, name: "Be Gia Han", age: 7, parentId: 9003 },
+  { id: 204, name: "Be Tuan Kiet", age: 9, parentId: 9004 },
+  { id: 205, name: "Be Ngoc Khue", age: 10, parentId: 9005 },
+  { id: 206, name: "Be Lam Phu", age: 11, parentId: 9001 },
+  { id: 207, name: "Be Minh Chau", age: 12, parentId: 9002 },
+  { id: 208, name: "Be Bao Lam", age: 13, parentId: 9003 },
+  { id: 209, name: "Be Huy Hoang", age: 8, parentId: 9004 },
+  { id: 210, name: "Be An Nhi", age: 6, parentId: 9005 },
+  { id: 211, name: "Be Dang Khoa", age: 7, parentId: 9001 },
+  { id: 212, name: "Be Khanh Linh", age: 8, parentId: 9002 },
+  { id: 213, name: "Be Yen Vy", age: 9, parentId: 9003 },
+  { id: 214, name: "Be Minh Quan", age: 10, parentId: 9004 },
+  { id: 215, name: "Be Ha Vy", age: 11, parentId: 9005 },
+  { id: 216, name: "Be Truong An", age: 12, parentId: 9001 },
+  { id: 217, name: "Be Bao Han", age: 13, parentId: 9002 },
+  { id: 218, name: "Be Thanh Lam", age: 14, parentId: 9003 },
+  { id: 219, name: "Be Dang Minh", age: 15, parentId: 9004 },
+  { id: 220, name: "Be Yen Nhi", age: 9, parentId: 9005 }
+];
+
+const DEFAULT_APPOINTMENTS = DEFAULT_PATIENTS.map((patient, index) => {
+  const doctor = DEFAULT_DOCTORS[index % DEFAULT_DOCTORS.length];
+  const day = 10 + (index % 10);
+  const hour = 8 + (index % 5);
+  const minute = index % 2 === 0 ? "00" : "30";
+  return {
+    id: 6000 + index,
+    patientId: patient.id,
+    doctorId: doctor.id,
+    time: `2024-10-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${minute}`,
+    status: 'pending'
+  };
+});
+
+function deepClone(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
+function loadArray(key, defaults = []) {
+  const raw = localStorage.getItem(key);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (error) {
+      console.warn(`Khong the doc du lieu ${key}`, error);
+    }
+  }
+  return deepClone(defaults);
+}
+
+/* ================== DATABASE ================== */
+const DB = {
+  users: loadArray('adhd_users'),
+  patients: loadArray('adhd_patients', DEFAULT_PATIENTS),
+  appointments: loadArray('adhd_appointments', DEFAULT_APPOINTMENTS),
+  diaries: loadArray('adhd_diaries'),
+  assessments: loadArray('adhd_assessments'),
+  treatments: loadArray('adhd_treatments'),
+  doctors: deepClone(DEFAULT_DOCTORS)
+};
+
+function saveDB() {
+  localStorage.setItem('adhd_users', JSON.stringify(DB.users));
+  localStorage.setItem('adhd_patients', JSON.stringify(DB.patients));
+  localStorage.setItem('adhd_appointments', JSON.stringify(DB.appointments));
+  localStorage.setItem('adhd_diaries', JSON.stringify(DB.diaries));
+  localStorage.setItem('adhd_assessments', JSON.stringify(DB.assessments));
+  localStorage.setItem('adhd_treatments', JSON.stringify(DB.treatments));
+}
+
+let currentUser = null;
+
+const PAGE_SIZE = 10;
+const paginationState = {
+  parentDoctor: 1,
+  doctorPatients: 1,
+  receptionistPending: 1,
+  adminDoctors: 1
+};
+
+/* ================== PAGINATION HELPERS ================== */
+function paginate(list, page, size = PAGE_SIZE) {
+  const totalPages = Math.max(1, Math.ceil((list.length || 0) / size) || 1);
+  const current = Math.min(Math.max(page, 1), totalPages);
+  const start = (current - 1) * size;
+  return {
+    items: list.slice(start, start + size),
+    totalPages,
+    currentPage: current
+  };
+}
+
+function createPaginationControls(currentPage, totalPages, changeHandler) {
+  if (totalPages <= 1) return '';
+  return `<div class="pagination">
+    <button type="button" ${currentPage === 1 ? 'disabled' : ''} onclick="${changeHandler}(${currentPage - 1})">&#171; Truoc</button>
+    <span>Trang ${currentPage}/${totalPages}</span>
+    <button type="button" ${currentPage === totalPages ? 'disabled' : ''} onclick="${changeHandler}(${currentPage + 1})">Sau &#187;</button>
+  </div>`;
+}
+
+function changeParentDoctorPage(page) {
+  paginationState.parentDoctor = page;
+  parentBookAppointment();
+}
+
+function changeDoctorPatientPage(page) {
+  paginationState.doctorPatients = page;
+  doctorPatientList();
+}
+
+function changeReceptionistPendingPage(page) {
+  paginationState.receptionistPending = page;
+  receptionistCheckin();
+}
+
+function changeAdminDoctorPage(page) {
+  paginationState.adminDoctors = page;
+  adminReports();
+}
+
+/* ================== PAGE CONTROL ================== */
+function showAuth(page) {
+  document.querySelectorAll('#authPages > .page').forEach(p => p.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+}
+
+function showDashboard() {
+  document.getElementById('authPages').classList.add('hidden');
+  document.getElementById('dashboardContainer').classList.remove('hidden');
+  document.getElementById('userDisplay').textContent = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
+  loadRoleMenu();
+}
+
+function hideDashboard() {
+  document.getElementById('authPages').classList.remove('hidden');
+  document.getElementById('dashboardContainer').classList.add('hidden');
+  showAuth('home');
+}
+
+/* ================== AUTH ================== */
+function register() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const role = document.getElementById('regRole').value;
+
+  if (!name || !email || !pass) return alert('Vui lòng điền đầy đủ');
+  if (!/^\S+@\S+\.\S+$/.test(email)) return alert('Email không hợp lệ');
+  if (DB.users.some(u => u.email === email)) return alert('Email đã tồn tại');
+
+  DB.users.push({ id: Date.now(), name, email, pass, role });
+  saveDB();
+  alert('Đăng ký thành công! Vui lòng đăng nhập.');
+  showAuth('login');
+}
+
+function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+
+  const user = DB.users.find(u => u.email === email && u.pass === pass);
+  if (!user) return alert('Sai email hoặc mật khẩu');
+
+  currentUser = user;
+  showDashboard();
+}
+
+function logout() {
+  if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+    currentUser = null;
+    hideDashboard();
+  }
+}
+
+/* ================== ROLE MENU ================== */
+function loadRoleMenu() {
+  const menu = document.getElementById('roleMenu');
+  menu.innerHTML = '';
+
+  const menus = {
+    parent: [
+      { label: "Quản lý bệnh nhân", fn: parentManagePatients },
+      { label: "Đặt lịch khám", fn: parentBookAppointment },
+      { label: "Nhật ký hành vi", fn: parentDiary },
+      { label: "Xem tiến trình", fn: parentProgress }
+    ],
+    doctor: [
+      { label: "Danh sách bệnh nhân", fn: doctorPatientList },
+      { label: "Test ADHD", fn: doctorStartTest },
+      { label: "Lập phác đồ", fn: doctorTreatmentPlan }
+    ],
+    receptionist: [
+      { label: "Check-in bệnh nhân", fn: receptionistCheckin },
+      { label: "Quản lý lịch", fn: receptionistAppointments }
+    ],
+    admin: [
+      { label: "Báo cáo thống kê", fn: adminReports }
+    ]
+  };
+
+  menus[currentUser.role].forEach(item => {
+    const a = document.createElement('a');
+    a.href = '#'; a.textContent = item.label;
+    a.onclick = (e) => {
+      e.preventDefault();
+      menu.querySelectorAll('a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      item.fn();
+    };
+    menu.appendChild(a);
+  });
+
+  if (menus[currentUser.role].length > 0) {
+    menus[currentUser.role][0].fn();
+    menu.firstChild.classList.add('active');
+  }
+}
+
+/* ================== PARENT: QUẢN LÝ BỆNH NHÂN ================== */
+function parentManagePatients() {
+  let html = `<h3>Quản lý bệnh nhân</h3>
+    <button class="btn btn-success" onclick="openAddPatientModal()">+ Thêm bệnh nhân</button>
+    <table><tr><th>Tên</th><th>Tuổi</th><th>Hành động</th></tr>`;
+  
+  const patients = DB.patients.filter(p => p.parentId === currentUser.id);
+  if (patients.length === 0) {
+    html += `<tr><td colspan="3" class="text-center" style="color:#666;">Chưa có bệnh nhân nào</td></tr>`;
+  } else {
+    patients.forEach(p => {
+      html += `<tr><td>${p.name}</td><td>${p.age}</td>
+        <td><button class="btn-sm" onclick="editPatient(${p.id})">Sửa</button></td></tr>`;
+    });
+  }
+  html += `</table>`;
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+function openAddPatientModal() {
+  openModal(`
+    <h3>Thêm bệnh nhân mới</h3>
+    <div class="form-group"><label>Họ tên</label><input id="newPatientName" /></div>
+    <div class="form-group"><label>Tuổi</label><input type="number" id="newPatientAge" min="1" max="18" /></div>
+    <button class="btn" onclick="addPatient()">Lưu</button>
+  `);
+}
+
+function addPatient() {
+  const name = document.getElementById('newPatientName').value.trim();
+  const age = document.getElementById('newPatientAge').value;
+  if (!name || !age) return alert('Vui lòng nhập đầy đủ');
+  DB.patients.push({ id: Date.now(), name, age, parentId: currentUser.id });
+  saveDB();
+  closeModal();
+  parentManagePatients();
+}
+
+function editPatient(id) {
+  const p = DB.patients.find(x => x.id === id);
+  openModal(`
+    <h3>Sửa bệnh nhân</h3>
+    <div class="form-group"><label>Họ tên</label><input id="editName" value="${p.name}" /></div>
+    <div class="form-group"><label>Tuổi</label><input type="number" id="editAge" value="${p.age}" /></div>
+    <button class="btn" onclick="saveEdit(${id})">Lưu</button>
+  `);
+}
+
+function saveEdit(id) {
+  const name = document.getElementById('editName').value.trim();
+  const age = document.getElementById('editAge').value;
+  if (!name || !age) return alert('Không được để trống');
+  const p = DB.patients.find(x => x.id === id);
+  p.name = name; p.age = age;
+  saveDB();
+  closeModal();
+  parentManagePatients();
+}
+
+/* ================== PARENT: ĐẶT LỊCH KHÁM ================== */
+function parentBookAppointment() {
+  let html = `<h3>?????t l??<ch khA?m</h3><div class="alert alert-info">Ch???n b???nh nhA?n ?+' BA?c s?c ?+' Th???i gian</div>`;
+  const patients = DB.patients.filter(p => p.parentId === currentUser.id);
+  if (patients.length === 0) {
+    html += `<p>Ch??a cA3 b???nh nhA?n. <a href="#" onclick="parentManagePatients()">ThA?m ngay</a></p>`;
+  } else {
+    html += `<select id="selectPatient"><option value="">Ch???n b???nh nhA?n</option>`;
+    patients.forEach(p => html += `<option value="${p.id}">${p.name}</option>`);
+    html += `</select>`;
+
+    html += `<select id="selectDoctor"><option value="">Ch???n bA?c s?c</option>`;
+    DB.doctors.forEach(d => html += `<option value="${d.id}">${d.name} - ${d.specialty}</option>`);
+    html += `</select>`;
+
+    html += `<input type="datetime-local" id="apptTime" />`;
+    html += `<button class="btn" onclick="bookNow()">?????t l??<ch</button>`;
+
+    html += `<h4 class="mt-20">L??<ch ?`A? ?`???t</h4><table><tr><th>B???nh nhA?n</th><th>BA?c s?c</th><th>Th???i gian</th><th>Tr???ng thA?i</th></tr>`;
+    DB.appointments.filter(a => patients.some(p => p.id == a.patientId)).forEach(a => {
+      const p = DB.patients.find(x => x.id == a.patientId);
+      const d = DB.doctors.find(x => x.id == a.doctorId);
+      const status = a.status === 'checked-in' ? '??A? check-in' : 'Ch??? khA?m';
+      html += `<tr><td>${p.name}</td><td>${d.name}</td><td>${new Date(a.time).toLocaleString()}</td><td>${status}</td></tr>`;
+    });
+    html += `</table>`;
+  }
+  const doctorPage = paginate(DB.doctors, paginationState.parentDoctor);
+  paginationState.parentDoctor = doctorPage.currentPage;
+  html += `<h4 class="mt-20">Danh sA?ch BA?c s?c</h4>
+    <table><tr><th>BA?c s?c</th><th>ChuyA?n khoa</th><th>L??<ch lA?m vi???c</th></tr>`;
+  if (doctorPage.items.length === 0) {
+    html += `<tr><td colspan="3" class="text-center">Ch??a cA3 BA?c s?c nA?o</td></tr>`;
+  } else {
+    doctorPage.items.forEach(d => {
+      html += `<tr><td>${d.name}</td><td>${d.specialty}</td><td>${d.schedule}</td></tr>`;
+    });
+  }
+  html += `</table>`;
+  html += createPaginationControls(doctorPage.currentPage, doctorPage.totalPages, 'changeParentDoctorPage');
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+
+function bookNow() {
+  const pid = document.getElementById('selectPatient').value;
+  const did = document.getElementById('selectDoctor').value;
+  const time = document.getElementById('apptTime').value;
+  if (!pid || !did || !time) return alert('Vui lòng chọn đầy đủ');
+  DB.appointments.push({ id: Date.now(), patientId: +pid, doctorId: +did, time, status: 'pending' });
+  saveDB();
+  alert('Đặt lịch thành công!');
+  parentBookAppointment();
+}
+
+/* ================== PARENT: NHẬT KÝ HÀNH VI ================== */
+function parentDiary() {
+  let html = `<h3>Nhật ký hành vi</h3>
+    <button class="btn btn-success" onclick="openDiaryModal()">+ Ghi nhật ký</button>
+    <table><tr><th>Ngày</th><th>Nội dung</th><th>Hành động</th></tr>`;
+  
+  const entries = DB.diaries.filter(d => {
+    const p = DB.patients.find(x => x.id === d.patientId);
+    return p && p.parentId === currentUser.id;
+  });
+
+  if (entries.length === 0) {
+    html += `<tr><td colspan="3" class="text-center">Chưa có nhật ký</td></tr>`;
+  } else {
+    entries.forEach(d => {
+      const p = DB.patients.find(x => x.id === d.patientId);
+      html += `<tr><td>${new Date(d.date).toLocaleDateString()}</td><td>${d.content}</td>
+        <td><button class="btn-sm btn-danger" onclick="deleteDiary(${d.id})">Xóa</button></td></tr>`;
+    });
+  }
+  html += `</table>`;
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+function openDiaryModal() {
+  const patients = DB.patients.filter(p => p.parentId === currentUser.id);
+  if (patients.length === 0) return alert('Vui lòng thêm bệnh nhân trước');
+  let options = `<option value="">Chọn bệnh nhân</option>`;
+  patients.forEach(p => options += `<option value="${p.id}">${p.name}</option>`);
+  openModal(`
+    <h3>Ghi nhật ký hành vi</h3>
+    <div class="form-group"><label>Bệnh nhân</label><select id="diaryPatient">${options}</select></div>
+    <div class="form-group"><label>Nội dung</label><textarea id="diaryContent" rows="4"></textarea></div>
+    <button class="btn" onclick="saveDiary()">Lưu</button>
+  `);
+}
+
+function saveDiary() {
+  const pid = document.getElementById('diaryPatient').value;
+  const content = document.getElementById('diaryContent').value.trim();
+  if (!pid || !content) return alert('Vui lòng nhập đầy đủ');
+  DB.diaries.push({ id: Date.now(), patientId: +pid, content, date: new Date() });
+  saveDB();
+  closeModal();
+  parentDiary();
+}
+
+function deleteDiary(id) {
+  if (confirm('Xóa nhật ký này?')) {
+    DB.diaries = DB.diaries.filter(d => d.id !== id);
+    saveDB();
+    parentDiary();
+  }
+}
+
+/* ================== PARENT: XEM TIẾN TRÌNH ================== */
+function parentProgress() {
+  let html = `<h3>Xem tiến trình điều trị</h3>`;
+  const patients = DB.patients.filter(p => p.parentId === currentUser.id);
+  if (patients.length === 0) {
+    html += `<p>Chưa có bệnh nhân.</p>`;
+  } else {
+    patients.forEach(p => {
+      const assessments = DB.assessments.filter(a => a.patientId === p.id);
+      const treatments = DB.treatments.filter(t => t.patientId === p.id);
+      html += `<div class="card mt-20"><h4>${p.name}</h4>`;
+      if (assessments.length > 0) {
+        html += `<p>Điểm ADHD gần nhất: <strong>${assessments[assessments.length-1].score}/54</strong></p>`;
+      }
+      if (treatments.length > 0) {
+        html += `<p>Phác đồ hiện tại: ${treatments[treatments.length-1].plan}</p>`;
+      }
+      html += `</div>`;
+    });
+  }
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+/* ================== DOCTOR: DANH SÁCH BỆNH NHÂN ================== */
+function doctorPatientList() {
+  let html = `<h3>Danh sA?ch b???nh nhA?n</h3><table><tr><th>TA?n</th><th>Tu??i</th><th>HA?nh ?`??Tng</th></tr>`;
+  const patientPage = paginate(DB.patients, paginationState.doctorPatients);
+  paginationState.doctorPatients = patientPage.currentPage;
+  if (patientPage.items.length === 0) {
+    html += `<tr><td colspan="3" class="text-center">Ch??a cA3 b???nh nhA?n</td></tr>`;
+  } else {
+    patientPage.items.forEach(p => {
+      html += `<tr><td>${p.name}</td><td>${p.age}</td>
+        <td>
+          <button class="btn-sm" onclick="viewPatient(${p.id})">Xem</button>
+          <button class="btn-sm btn-warning" onclick="doctorStartTest(${p.id})">Test ADHD</button>
+        </td></tr>`;
+    });
+  }
+  html += `</table>`;
+  html += createPaginationControls(patientPage.currentPage, patientPage.totalPages, 'changeDoctorPatientPage');
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+
+function viewPatient(id) {
+  const p = DB.patients.find(x => x.id === id);
+  const assessments = DB.assessments.filter(a => a.patientId === id);
+  let html = `<h3>Hồ sơ: ${p.name}</h3><p>Tuổi: ${p.age}</p>`;
+  if (assessments.length > 0) {
+    html += `<h4>Kết quả test</h4><ul>`;
+    assessments.forEach(a => html += `<li>${new Date(a.date).toLocaleDateString()}: ${a.score}/54 điểm</li>`);
+    html += `</ul>`;
+  }
+  openModal(html);
+}
+
+function doctorStartTest(patientId) {
+  let html = `<h3>Test ADHD - 18 câu</h3><form id="adhdForm">`;
+  const questions = [
+    "Thường xuyên không chú ý đến chi tiết", "Khó duy trì sự chú ý", "Không lắng nghe khi được nói chuyện trực tiếp",
+    "Không làm theo hướng dẫn", "Khó tổ chức công việc", "Tránh né công việc đòi hỏi nỗ lực tinh thần",
+    "Hay làm mất đồ", "Dễ bị phân tâm", "Hay quên trong sinh hoạt hàng ngày",
+    "Hay nghịch ngón tay, chân", "Thường rời ghế khi cần ngồi yên", "Chạy nhảy quá mức",
+    "Khó chơi yên lặng", "Luôn luôn 'chạy máy'", "Nói quá nhiều",
+    "Trả lời trước khi câu hỏi kết thúc", "Khó chờ đến lượt", "Chen ngang vào người khác"
+  ];
+  questions.forEach((q, i) => {
+    html += `<div class="form-group"><label>${i+1}. ${q}</label>
+      <select name="q${i}">
+        <option value="0">Không bao giờ</option>
+        <option value="1">Hiếm khi</option>
+        <option value="2">Thỉnh thoảng</option>
+        <option value="3">Thường xuyên</option>
+      </select></div>`;
+  });
+  html += `<button type="button" class="btn" onclick="submitADHDTest(${patientId})">Nộp bài</button></form>`;
+  openModal(html);
+}
+
+function submitADHDTest(patientId) {
+  const form = document.getElementById('adhdForm');
+  let score = 0;
+  for (let i = 0; i < 18; i++) score += parseInt(form.elements[`q${i}`].value || 0);
+  DB.assessments.push({ patientId, score, date: new Date() });
+  saveDB();
+  closeModal();
+  alert(`Kết quả: ${score}/54 điểm`);
+  doctorPatientList();
+}
+
+function doctorTreatmentPlan() {
+  let html = `<h3>Lập phác đồ điều trị</h3>`;
+  const patients = DB.patients;
+  if (patients.length === 0) {
+    html += `<p>Chưa có bệnh nhân.</p>`;
+  } else {
+    html += `<select id="treatPatient"><option value="">Chọn bệnh nhân</option>`;
+    patients.forEach(p => html += `<option value="${p.id}">${p.name}</option>`);
+    html += `</select>`;
+    html += `<textarea id="treatmentPlan" rows="5" placeholder="Nhập phác đồ điều trị..."></textarea>`;
+    html += `<button class="btn" onclick="saveTreatment()">Lưu phác đồ</button>`;
+  }
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+function saveTreatment() {
+  const pid = document.getElementById('treatPatient').value;
+  const plan = document.getElementById('treatmentPlan').value.trim();
+  if (!pid || !plan) return alert('Vui lòng chọn bệnh nhân và nhập phác đồ');
+  DB.treatments.push({ patientId: +pid, plan, date: new Date() });
+  saveDB();
+  alert('Lưu phác đồ thành công!');
+  doctorTreatmentPlan();
+}
+
+/* ================== RECEPTIONIST ================== */
+function receptionistCheckin() {
+  let html = `<h3>Check-in b???nh nhA?n</h3><table><tr><th>B???nh nhA?n</th><th>BA?c s?c</th><th>Th???i gian</th><th>HA?nh ?`??Tng</th></tr>`;
+  const pending = DB.appointments.filter(a => a.status === 'pending');
+  const pendingPage = paginate(pending, paginationState.receptionistPending);
+  paginationState.receptionistPending = pendingPage.currentPage;
+  if (pendingPage.items.length === 0) {
+    html += `<tr><td colspan="4" class="text-center">KhA'ng cA3 l??<ch ch??? check-in</td></tr>`;
+  } else {
+    pendingPage.items.forEach(a => {
+      const p = DB.patients.find(x => x.id == a.patientId);
+      const d = DB.doctors.find(x => x.id == a.doctorId);
+      html += `<tr><td>${p?.name}</td><td>${d?.name}</td><td>${new Date(a.time).toLocaleString()}</td>
+        <td><button class="btn-sm btn-success" onclick="checkin(${a.id})">Check-in</button></td></tr>`;
+    });
+  }
+  html += `</table>`;
+  html += createPaginationControls(pendingPage.currentPage, pendingPage.totalPages, 'changeReceptionistPendingPage');
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+
+function checkin(id) {
+  const appt = DB.appointments.find(a => a.id === id);
+  if (appt) appt.status = 'checked-in';
+  saveDB();
+  alert('Check-in thành công!');
+  receptionistCheckin();
+}
+
+function receptionistAppointments() {
+  let html = `<h3>Quản lý lịch khám</h3><table><tr><th>Bệnh nhân</th><th>Bác sĩ</th><th>Thời gian</th><th>Trạng thái</th></tr>`;
+  DB.appointments.forEach(a => {
+    const p = DB.patients.find(x => x.id == a.patientId);
+    const d = DB.doctors.find(x => x.id == a.doctorId);
+    const status = a.status === 'checked-in' ? 'Đã check-in' : 'Chờ khám';
+    html += `<tr><td>${p?.name}</td><td>${d?.name}</td><td>${new Date(a.time).toLocaleString()}</td><td>${status}</td></tr>`;
+  });
+  html += `</table>`;
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+/* ================== ADMIN ================== */
+function adminReports() {
+  const totalPatients = DB.patients.length;
+  const totalAppointments = DB.appointments.length;
+  const checkedIn = DB.appointments.filter(a => a.status === 'checked-in').length;
+  const totalRevenue = checkedIn * 300000;
+
+  let html = `<h3>BA?o cA?o th??`ng kA?</h3>
+    <div class="flex">
+      <div class="card" style="flex:1;"><p>T??ng b???nh nhA?n: <strong>${totalPatients}</strong></p></div>
+      <div class="card" style="flex:1;"><p>T??ng l??<ch khA?m: <strong>${totalAppointments}</strong></p></div>
+      <div class="card" style="flex:1;"><p>??A? check-in: <strong>${checkedIn}</strong></p></div>
+      <div class="card" style="flex:1;"><p>Doanh thu (300k/l?????t): <strong>${totalRevenue.toLocaleString()}?`</strong></p></div>
+    </div>`;
+  const doctorPage = paginate(DB.doctors, paginationState.adminDoctors);
+  paginationState.adminDoctors = doctorPage.currentPage;
+  html += `<h4 class="mt-20">Danh sA?ch BA?c s?c</h4><table><tr><th>BA?c s?c</th><th>ChuyA?n khoa</th><th>L??<ch lA?m vi???c</th></tr>`;
+  if (doctorPage.items.length === 0) {
+    html += `<tr><td colspan="3" class="text-center">Ch??a cA3 BA?c s?c</td></tr>`;
+  } else {
+    doctorPage.items.forEach(d => {
+      html += `<tr><td>${d.name}</td><td>${d.specialty}</td><td>${d.schedule}</td></tr>`;
+    });
+  }
+  html += `</table>`;
+  html += createPaginationControls(doctorPage.currentPage, doctorPage.totalPages, 'changeAdminDoctorPage');
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+
+/* ================== MODAL ================== */
+function openModal(content) {
+  document.getElementById('modalBody').innerHTML = content;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+/* ================== INIT ================== */
+showAuth('home');
+</script>

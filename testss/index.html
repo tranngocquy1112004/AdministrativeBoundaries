@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Trợ Giúp Chọn Trường Lớp 10</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header i {
+            color: #2563eb;
+            font-size: 28px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            padding: 15px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #4b5563;
+        }
+
+        .nav-item:hover {
+            background: #f3f4f6;
+        }
+
+        .nav-item.active {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .nav-item i {
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 {
+            color: #1e293b;
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .auth-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .auth-note {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .auth-status-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+        .stat-icon.green { background: #dcfce7; color: #16a34a; }
+        .stat-icon.orange { background: #fed7aa; color: #ea580c; }
+        .stat-icon.purple { background: #e9d5ff; color: #9333ea; }
+
+        .stat-info h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        select.search-input {
+            cursor: pointer;
+        }
+
+        /* School List */
+        .school-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .school-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .school-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .school-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .school-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .school-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-specialized {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .badge-public {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .school-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .info-item i {
+            color: #2563eb;
+            width: 20px;
+        }
+
+        .cutoff-scores {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .score-year {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .score-year .year {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .score-year .score {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .school-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #2563eb;
+            border: 1px solid #2563eb;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f9ff;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-outline:hover {
+            background: #f9fafb;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Recommendation Results */
+        .recommendation-groups {
+            display: grid;
+            gap: 25px;
+        }
+
+        .rec-group {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .rec-group-header {
+            padding: 15px 20px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rec-group.safe .rec-group-header {
+            background: #16a34a;
+        }
+
+        .rec-group.medium .rec-group-header {
+            background: #ea580c;
+        }
+
+        .rec-group.reach .rec-group-header {
+            background: #9333ea;
+        }
+
+        .rec-group-content {
+            background: white;
+            padding: 20px;
+        }
+
+        .rec-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .rec-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .probability {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        /* Compare Table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .compare-table th,
+        .compare-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .compare-table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .compare-table tr:hover {
+            background: #f9fafb;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .school-info {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-school"></i>
+                <h1>Chọn Trường 10</h1>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-page="home">
+                    <i class="fas fa-home"></i>
+                    <span>Trang chủ</span>
+                </a>
+                <a href="#" class="nav-item" data-page="schools">
+                    <i class="fas fa-school"></i>
+                    <span>Danh sách trường</span>
+                </a>
+                <a href="#" class="nav-item" data-page="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Hồ sơ của tôi</span>
+                </a>
+                <a href="#" class="nav-item" data-page="recommend">
+                    <i class="fas fa-award"></i>
+                    <span>Gợi ý trường</span>
+                </a>
+                <a href="#" class="nav-item" data-page="compare">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>So sánh trường</span>
+                </a>
+                <a href="#" class="nav-item" data-page="saved">
+                    <i class="fas fa-star"></i>
+                    <span>Trường đã lưu</span>
+                </a>
+                <a href="#" class="nav-item" data-page="auth">
+                    <i class="fas fa-right-to-bracket"></i>
+                    <span>Tài khoản</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="menuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h2 id="pageTitle">Trang chủ</h2>
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">HS</div>
+                    <div>
+                        <div id="userGreeting" style="font-weight: 600;">Khách</div>
+                        <div id="userSubText" style="font-size: 13px; color: #6b7280;">Chưa đăng nhập</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Home Page -->
+            <div id="homePage" class="page-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-school"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>120</h3>
+                            <p>Trường THPT</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>45,000</h3>
+                            <p>Chỉ tiêu tuyển sinh</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>19.5</h3>
+                            <p>Điểm chuẩn TB</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>0</h3>
+                            <p>Trường đã lưu</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-info-circle"></i>
+                        Hướng dẫn sử dụng
+                    </div>
+                    <div style="line-height: 1.8; color: #4b5563;">
+                        <p style="margin-bottom: 15px;"><strong>Chào mừng bạn đến với Hệ thống trợ giúp chọn trường lớp 10!</strong></p>
+                        <ol style="padding-left: 20px;">
+                            <li style="margin-bottom: 10px;"><strong>Xem danh sách trường:</strong> Tra cứu thông tin các trường THPT, điểm chuẩn, chỉ tiêu</li>
+                            <li style="margin-bottom: 10px;"><strong>Nhập hồ sơ:</strong> Cập nhật điểm thi, học lực, khu vực ưu tiên</li>
+                            <li style="margin-bottom: 10px;"><strong>Nhận gợi ý:</strong> Hệ thống sẽ phân tích và đề xuất trường phù hợp</li>
+                            <li style="margin-bottom: 10px;"><strong>So sánh trường:</strong> Đánh giá chi tiết giữa các trường quan tâm</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schools Page -->
+            <div id="schoolsPage" class="page-content" style="display: none;">
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm trường...">
+                    <select class="search-input" id="provinceFilter" style="max-width: 200px;">
+                        <option value="">Tất cả tỉnh/thành</option>
+                        <option value="Hà Nội">Hà Nội</option>
+                        <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                    </select>
+                    <select class="search-input" id="typeFilter" style="max-width: 200px;">
+                        <option value="">Loại trường</option>
+                        <option value="specialized">Chuyên</option>
+                        <option value="public">Công lập</option>
+                    </select>
+                </div>
+
+                <div class="school-list" id="schoolList"></div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="profilePage" class="page-content" style="display: none;">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-user-edit"></i>
+                        Thông tin hồ sơ học sinh
+                    </div>
+                    <form id="profileForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Họ và tên</label>
+                                <input type="text" class="form-input" id="fullName" placeholder="Nguyễn Văn A">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ngày sinh</label>
+                                <input type="date" class="form-input" id="birthDate">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Tỉnh/Thành phố</label>
+                                <select class="form-input" id="province">
+                                    <option value="">Chọn tỉnh/thành</option>
+                                    <option value="Hà Nội">Hà Nội</option>
+                                    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quận/Huyện</label>
+                                <select class="form-input" id="district">
+                                    <option value="">Chọn quận/huyện</option>
+                                    <option value="Ba Đình">Ba Đình</option>
+                                    <option value="Hoàn Kiếm">Hoàn Kiếm</option>
+                                    <option value="Đống Đa">Đống Đa</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Điểm thi dự kiến (0-30)</label>
+                                <input type="number" class="form-input" id="examScore" placeholder="25.5" step="0.1" min="0" max="30">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Học lực</label>
+                                <select class="form-input" id="gpa">
+                                    <option value="">Chọn học lực</option>
+                                    <option value="Xuất sắc">Xuất sắc</option>
+                                    <option value="Giỏi">Giỏi</option>
+                                    <option value="Khá">Khá</option>
+                                    <option value="Trung bình">Trung bình</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Diện ưu tiên</label>
+                            <select class="form-input" id="priority">
+                                <option value="">Không có</option>
+                                <option value="Khu vực 1">Khu vực 1</option>
+                                <option value="Khu vực 2">Khu vực 2</option>
+                                <option value="Khu vực 3">Khu vực 3</option>
+                                <option value="Con liệt sĩ">Con liệt sĩ</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Lưu hồ sơ
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Auth Page -->
+            <div id="authPage" class="page-content" style="display: none;">
+                <div class="card auth-status">
+                    <div class="auth-status-content">
+                        <div>
+                            <div style="font-weight: 600; font-size: 16px;">Trạng thái tài khoản</div>
+                            <div id="authStateText" style="color: #6b7280; margin-top: 5px;">
+                                Bạn chưa đăng nhập. Tạo tài khoản mới hoặc đăng nhập để đồng bộ dữ liệu.
+                            </div>
+                        </div>
+                        <button class="btn btn-outline" id="logoutBtn" style="display: none;">
+                            <i class="fas fa-right-from-bracket"></i>
+                            Đăng xuất
+                        </button>
+                    </div>
+                </div>
+
+                <div class="auth-grid">
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-user-plus"></i>
+                            Đăng ký tài khoản
+                        </div>
+                        <p class="auth-note">
+                            Tạo tài khoản miễn phí để hệ thống ghi nhớ danh sách trường yêu thích, hồ sơ và các gợi ý dành riêng cho bạn.
+                        </p>
+                        <div id="registerMessage" class="alert" style="display: none;"></div>
+                        <form id="registerForm">
+                            <div class="form-group">
+                                <label class="form-label" for="registerName">Họ và tên</label>
+                                <input type="text" class="form-input" id="registerName" placeholder="Nguyễn Văn A" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="registerEmail">Email</label>
+                                <input type="email" class="form-input" id="registerEmail" placeholder="hoc-sinh@example.com" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="registerPassword">Mật khẩu</label>
+                                    <input type="password" class="form-input" id="registerPassword" placeholder="Tối thiểu 6 ký tự" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="registerConfirm">Nhập lại mật khẩu</label>
+                                    <input type="password" class="form-input" id="registerConfirm" placeholder="Gõ lại mật khẩu" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-check"></i>
+                                Tạo tài khoản
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-right-to-bracket"></i>
+                            Đăng nhập nhanh
+                        </div>
+                        <p class="auth-note">
+                            Đăng nhập bằng email đã lưu để tiếp tục theo dõi tiến độ và cập nhật dữ liệu cá nhân.
+                        </p>
+                        <div id="loginMessage" class="alert" style="display: none;"></div>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label class="form-label" for="loginEmail">Email</label>
+                                <input type="email" class="form-input" id="loginEmail" placeholder="hoc-sinh@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="loginPassword">Mật khẩu</label>
+                                <input type="password" class="form-input" id="loginPassword" placeholder="********" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-arrow-right-to-bracket"></i>
+                                Đăng nhập
+                            </button>
+                            <p class="auth-note" style="margin-top: 10px;">
+                                Dữ liệu chỉ được lưu trong bộ nhớ trình duyệt (localStorage) của bạn.
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommend Page -->
+            <div id="recommendPage" class="page-content" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle" style="font-size: 20px;"></i>
+                    <div>Vui lòng hoàn thiện hồ sơ để nhận gợi ý trường phù hợp nhất</div>
+                </div>
+
+                <div id="recommendResults" style="display: none;">
+                    <div class="recommendation-groups" id="recommendGroups"></div>
+                </div>
+
+                <button class="btn btn-primary" id="getRecommendBtn" style="margin-bottom: 20px;">
+                    <i class="fas fa-magic"></i>
+                    Nhận gợi ý trường
+                </button>
+            </div>
+
+            <!-- Compare Page -->
+            <div id="comparePage" class="page-content" style="display: none;">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-check-square"></i>
+                        Chọn trường để so sánh (Tối đa 3 trường)
+                    </div>
+                    <div id="compareSelection"></div>
+                </div>
+
+                <div class="card" id="compareResults" style="display: none;">
+                    <div class="card-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Kết quả so sánh
+                    </div>
+                    <table class="compare-table" id="compareTable"></table>
+                </div>
+            </div>
+
+            <!-- Saved Page -->
+            <div id="savedPage" class="page-content" style="display: none;">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-star"></i>
+                        Danh sách trường đã lưu
+                    </div>
+                    <div id="savedList">
+                        <p style="text-align: center; color: #6b7280; padding: 40px;">
+                            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+                            Bạn chưa lưu trường nào
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Mock data
+        const schoolsData = [
+            { id: 1, code: 'THPT01', name: 'THPT Chu Văn An', province: 'Hà Nội', district: 'Ba Đình', type: 'specialized', cutoff: [21.5, 21.0, 20.5], quota: 320, applicants: 1280, address: '80 Hoàng Hoa Thám' },
+            { id: 2, code: 'THPT02', name: 'THPT Nguyễn Huệ', province: 'Hà Nội', district: 'Hai Bà Trưng', type: 'public', cutoff: [19.0, 18.5, 18.0], quota: 450, applicants: 1350, address: 'Bạch Mai' },
+            { id: 3, code: 'THPT03', name: 'THPT Lê Hồng Phong', province: 'Hà Nội', district: 'Đống Đa', type: 'specialized', cutoff: [22.0, 21.5, 21.0], quota: 280, applicants: 1400, address: 'Lê Duẩn' },
+            { id: 4, code: 'THPT04', name: 'THPT Trần Phú', province: 'Hà Nội', district: 'Hoàn Kiếm', type: 'public', cutoff: [18.5, 18.0, 17.5], quota: 400, applicants: 1200, address: 'Đinh Tiên Hoàng' },
+            { id: 5, code: 'THPT05', name: 'THPT Ams Lê Quý Đôn', province: 'Hà Nội', district: 'Tây Hồ', type: 'specialized', cutoff: [23.0, 22.5, 22.0], quota: 250, applicants: 1500, address: 'Xuân La' },
+            { id: 6, code: 'THPT06', name: 'THPT Việt Đức', province: 'Hà Nội', district: 'Long Biên', type: 'public', cutoff: [17.5, 17.0, 16.5], quota: 500, applicants: 1000, address: 'Ngọc Lâm' },
+        ];
+
+        let userProfile = {};
+        let savedSchools = [];
+        let compareList = [];
+        const USER_STORAGE_KEY = 'alojo_users';
+        const ACTIVE_USER_KEY = 'alojo_active_user';
+        let authUsers = [];
+        let activeUser = null;
+
+        try {
+            const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
+            authUsers = storedUsers ? JSON.parse(storedUsers) : [];
+            if (!Array.isArray(authUsers)) {
+                authUsers = [];
+            }
+        } catch (error) {
+            authUsers = [];
+        }
+
+        try {
+            const storedActiveUser = localStorage.getItem(ACTIVE_USER_KEY);
+            activeUser = storedActiveUser ? JSON.parse(storedActiveUser) : null;
+        } catch (error) {
+            activeUser = null;
+        }
+
+        function saveAuthUsers() {
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(authUsers));
+        }
+
+        function getInitials(name = '') {
+            return name
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean)
+                .map(part => part[0]?.toUpperCase() || '')
+                .join('')
+                .slice(0, 2) || 'HS';
+        }
+
+        function updateAuthStateUI() {
+            const avatarEl = document.getElementById('userAvatar');
+            const greetingEl = document.getElementById('userGreeting');
+            const subTextEl = document.getElementById('userSubText');
+            const stateTextEl = document.getElementById('authStateText');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (activeUser) {
+                if (avatarEl) avatarEl.textContent = getInitials(activeUser.name);
+                if (greetingEl) greetingEl.textContent = activeUser.name;
+                if (subTextEl) subTextEl.textContent = activeUser.email;
+                if (stateTextEl) stateTextEl.textContent = `Đang đăng nhập bằng ${activeUser.email}`;
+                if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+            } else {
+                if (avatarEl) avatarEl.textContent = 'HS';
+                if (greetingEl) greetingEl.textContent = 'Khách';
+                if (subTextEl) subTextEl.textContent = 'Chưa đăng nhập';
+                if (stateTextEl) stateTextEl.textContent = 'Bạn chưa đăng nhập. Tạo tài khoản mới hoặc đăng nhập để tiếp tục.';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+            }
+        }
+
+        function setActiveUser(user) {
+            activeUser = user;
+            if (user) {
+                localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(user));
+            } else {
+                localStorage.removeItem(ACTIVE_USER_KEY);
+            }
+            updateAuthStateUI();
+        }
+
+        function showAuthMessage(elementId, type = '', message = '') {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            if (!message) {
+                element.style.display = 'none';
+                element.textContent = '';
+                element.className = 'alert';
+                return;
+            }
+
+            const variants = {
+                success: 'alert-success',
+                info: 'alert-info',
+                error: 'alert-error'
+            };
+
+            element.className = `alert ${variants[type] || 'alert-info'}`;
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+
+        function setupAuthForms() {
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const name = document.getElementById('registerName').value.trim();
+                    const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+                    const password = document.getElementById('registerPassword').value.trim();
+                    const confirmPassword = document.getElementById('registerConfirm').value.trim();
+
+                    if (!name || !email || !password || !confirmPassword) {
+                        showAuthMessage('registerMessage', 'error', 'Vui lòng nhập đầy đủ thông tin.');
+                        return;
+                    }
+
+                    if (password.length < 6) {
+                        showAuthMessage('registerMessage', 'error', 'Mật khẩu cần tối thiểu 6 ký tự.');
+                        return;
+                    }
+
+                    if (password !== confirmPassword) {
+                        showAuthMessage('registerMessage', 'error', 'Mật khẩu nhập lại không khớp.');
+                        return;
+                    }
+
+                    const hasEmail = authUsers.some(user => user.email === email);
+                    if (hasEmail) {
+                        showAuthMessage('registerMessage', 'error', 'Email đã được sử dụng. Vui lòng thử email khác.');
+                        return;
+                    }
+
+                    const newUser = { id: Date.now(), name, email, password };
+                    authUsers.push(newUser);
+                    saveAuthUsers();
+                    setActiveUser({ id: newUser.id, name: newUser.name, email: newUser.email });
+                    registerForm.reset();
+                    showAuthMessage('registerMessage', 'success', 'Đăng ký thành công. Bạn đã được đăng nhập.');
+                    showAuthMessage('loginMessage');
+                });
+            }
+
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+                    const password = document.getElementById('loginPassword').value.trim();
+
+                    if (!email || !password) {
+                        showAuthMessage('loginMessage', 'error', 'Vui lòng nhập email và mật khẩu.');
+                        return;
+                    }
+
+                    const matchedUser = authUsers.find(user => user.email === email && user.password === password);
+                    if (!matchedUser) {
+                        showAuthMessage('loginMessage', 'error', 'Email hoặc mật khẩu chưa đúng.');
+                        return;
+                    }
+
+                    setActiveUser({ id: matchedUser.id, name: matchedUser.name, email: matchedUser.email });
+                    loginForm.reset();
+                    showAuthMessage('loginMessage', 'success', 'Đăng nhập thành công.');
+                });
+            }
+
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    if (!activeUser) return;
+                    setActiveUser(null);
+                    showAuthMessage('loginMessage', 'info', 'Bạn đã đăng xuất.');
+                });
+            }
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.dataset.page;
+                showPage(page);
+                
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                
+                // Close mobile menu
+                document.getElementById('sidebar').classList.remove('open');
+            });
+        });
+
+        // Mobile menu
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // Show page function
+        function showPage(pageName) {
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            const pageElement = document.getElementById(pageName + 'Page');
+            if (pageElement) {
+                pageElement.style.display = 'block';
+            }
+            
+            const pageTitles = {
+                home: 'Trang chủ',
+                schools: 'Danh sách trường',
+                profile: 'Hồ sơ của tôi',
+                recommend: 'Gợi ý trường',
+                compare: 'So sánh trường',
+                saved: 'Trường đã lưu',
+                auth: 'Tài khoản'
+            };
+            
+            document.getElementById('pageTitle').textContent = pageTitles[pageName] || 'Trang chủ';
+            
+            // Load specific page data
+            if (pageName === 'schools') {
+                renderSchools();
+            } else if (pageName === 'compare') {
+                renderCompareSelection();
+            } else if (pageName === 'saved') {
+                renderSavedSchools();
+            }
+        }
+
+        // Render schools
+        function renderSchools(filters = {}) {
+            const schoolList = document.getElementById('schoolList');
+            let filteredSchools = schoolsData;
+            
+            if (filters.search) {
+                filteredSchools = filteredSchools.filter(s => 
+                    s.name.toLowerCase().includes(filters.search.toLowerCase())
+                );
+            }
+            
+            if (filters.province) {
+                filteredSchools = filteredSchools.filter(s => s.province === filters.province);
+            }
+            
+            if (filters.type) {
+                filteredSchools = filteredSchools.filter(s => s.type === filters.type);
+            }
+            
+            schoolList.innerHTML = filteredSchools.map(school => `
+                <div class="school-card">
+                    <div class="school-header">
+                        <div>
+                            <div class="school-name">${school.name}</div>
+                            <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">
+                                <i class="fas fa-map-marker-alt"></i> ${school.address}, ${school.district}, ${school.province}
+                            </div>
+                        </div>
+                        <span class="school-badge ${school.type === 'specialized' ? 'badge-specialized' : 'badge-public'}">
+                            ${school.type === 'specialized' ? 'Chuyên' : 'Công lập'}
+                        </span>
+                    </div>
+                    
+                    <div class="school-info">
+                        <div class="info-item">
+                            <i class="fas fa-users"></i>
+                            <span>Chỉ tiêu: <strong>${school.quota}</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-user-graduate"></i>
+                            <span>Thí sinh: <strong>${school.applicants}</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Tỷ lệ chọi: <strong>${(school.applicants / school.quota).toFixed(1)}</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="cutoff-scores">
+                        <div class="score-year">
+                            <div class="year">2024</div>
+                            <div class="score">${school.cutoff[0]}</div>
+                        </div>
+                        <div class="score-year">
+                            <div class="year">2023</div>
+                            <div class="score">${school.cutoff[1]}</div>
+                        </div>
+                        <div class="score-year">
+                            <div class="year">2022</div>
+                            <div class="score">${school.cutoff[2]}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="school-actions">
+                        <button class="btn btn-primary" onclick="saveSchool(${school.id})">
+                            <i class="fas fa-star"></i>
+                            ${savedSchools.includes(school.id) ? 'Đã lưu' : 'Lưu trường'}
+                        </button>
+                        <button class="btn btn-secondary" onclick="addToCompare(${school.id})">
+                            <i class="fas fa-plus"></i>
+                            So sánh
+                        </button>
+                        <button class="btn btn-outline" onclick="viewSchoolDetail(${school.id})">
+                            <i class="fas fa-info-circle"></i>
+                            Chi tiết
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search and filter
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderSchools({
+                search: e.target.value,
+                province: document.getElementById('provinceFilter').value,
+                type: document.getElementById('typeFilter').value
+            });
+        });
+
+        document.getElementById('provinceFilter').addEventListener('change', (e) => {
+            renderSchools({
+                search: document.getElementById('searchInput').value,
+                province: e.target.value,
+                type: document.getElementById('typeFilter').value
+            });
+        });
+
+        document.getElementById('typeFilter').addEventListener('change', (e) => {
+            renderSchools({
+                search: document.getElementById('searchInput').value,
+                province: document.getElementById('provinceFilter').value,
+                type: e.target.value
+            });
+        });
+
+        // Profile form
+        document.getElementById('profileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            userProfile = {
+                fullName: document.getElementById('fullName').value,
+                birthDate: document.getElementById('birthDate').value,
+                province: document.getElementById('province').value,
+                district: document.getElementById('district').value,
+                examScore: parseFloat(document.getElementById('examScore').value),
+                gpa: document.getElementById('gpa').value,
+                priority: document.getElementById('priority').value
+            };
+            
+            alert('Lưu hồ sơ thành công!');
+        });
+
+        // Recommendation engine
+        document.getElementById('getRecommendBtn').addEventListener('click', () => {
+            if (!userProfile.examScore) {
+                alert('Vui lòng hoàn thiện hồ sơ trước khi nhận gợi ý!');
+                showPage('profile');
+                return;
+            }
+            
+            const results = calculateRecommendations();
+            renderRecommendations(results);
+        });
+
+        function calculateRecommendations() {
+            const score = userProfile.examScore;
+            const results = schoolsData.map(school => {
+                const avgCutoff = school.cutoff.reduce((a, b) => a + b, 0) / school.cutoff.length;
+                const stdDev = Math.sqrt(school.cutoff.reduce((sum, val) => sum + Math.pow(val - avgCutoff, 2), 0) / school.cutoff.length);
+                
+                const zScore = (score - avgCutoff) / (stdDev || 1);
+                let probability = 1 / (1 + Math.exp(-zScore));
+                
+                // Adjust for priority
+                if (userProfile.priority && userProfile.priority !== '') {
+                    probability = Math.min(probability + 0.05, 1);
+                }
+                
+                let group = 'reach';
+                if (probability >= 0.85) group = 'safe';
+                else if (probability >= 0.5) group = 'medium';
+                
+                return {
+                    school,
+                    probability: probability,
+                    group: group,
+                    avgCutoff: avgCutoff.toFixed(2)
+                };
+            });
+            
+            return results.sort((a, b) => b.probability - a.probability);
+        }
+
+        function renderRecommendations(results) {
+            document.getElementById('recommendResults').style.display = 'block';
+            
+            const groups = {
+                safe: { title: 'An toàn', icon: 'fa-check-circle', schools: [] },
+                medium: { title: 'Vừa phải', icon: 'fa-exclamation-circle', schools: [] },
+                reach: { title: 'Mơ ước', icon: 'fa-star', schools: [] }
+            };
+            
+            results.forEach(result => {
+                groups[result.group].schools.push(result);
+            });
+            
+            const groupsHtml = Object.entries(groups).map(([key, data]) => {
+                if (data.schools.length === 0) return '';
+                
+                return `
+                    <div class="rec-group ${key}">
+                        <div class="rec-group-header">
+                            <i class="fas ${data.icon}"></i>
+                            ${data.title} (${data.schools.length} trường)
+                        </div>
+                        <div class="rec-group-content">
+                            ${data.schools.map(result => `
+                                <div class="rec-item">
+                                    <div>
+                                        <div style="font-weight: 600; font-size: 16px; margin-bottom: 5px;">
+                                            ${result.school.name}
+                                        </div>
+                                        <div style="color: #6b7280; font-size: 14px;">
+                                            <i class="fas fa-map-marker-alt"></i> ${result.school.district}, ${result.school.province}
+                                            <span style="margin-left: 15px;">
+                                                <i class="fas fa-chart-line"></i> Điểm chuẩn TB: ${result.avgCutoff}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div class="probability">${(result.probability * 100).toFixed(0)}%</div>
+                                        <div style="font-size: 12px; color: #6b7280;">Xác suất đỗ</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('recommendGroups').innerHTML = groupsHtml;
+        }
+
+        // Compare functionality
+        function renderCompareSelection() {
+            const html = schoolsData.map(school => `
+                <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px; cursor: pointer;">
+                    <input type="checkbox" value="${school.id}" onchange="updateCompareList()" ${compareList.includes(school.id) ? 'checked' : ''} style="margin-right: 12px; width: 18px; height: 18px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${school.name}</div>
+                        <div style="font-size: 13px; color: #6b7280;">${school.district}, ${school.province}</div>
+                    </div>
+                    <span class="school-badge ${school.type === 'specialized' ? 'badge-specialized' : 'badge-public'}">
+                        ${school.type === 'specialized' ? 'Chuyên' : 'Công lập'}
+                    </span>
+                </label>
+            `).join('');
+            
+            document.getElementById('compareSelection').innerHTML = html;
+        }
+
+        function updateCompareList() {
+            const checkboxes = document.querySelectorAll('#compareSelection input[type="checkbox"]');
+            compareList = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value));
+            
+            if (compareList.length > 3) {
+                alert('Chỉ được chọn tối đa 3 trường để so sánh!');
+                checkboxes[checkboxes.length - 1].checked = false;
+                compareList.pop();
+                return;
+            }
+            
+            if (compareList.length >= 2) {
+                renderCompareResults();
+            } else {
+                document.getElementById('compareResults').style.display = 'none';
+            }
+        }
+
+        function renderCompareResults() {
+            document.getElementById('compareResults').style.display = 'block';
+            
+            const compareSchools = schoolsData.filter(s => compareList.includes(s.id));
+            
+            const table = `
+                <thead>
+                    <tr>
+                        <th>Tiêu chí</th>
+                        ${compareSchools.map(s => `<th>${s.name}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Loại trường</strong></td>
+                        ${compareSchools.map(s => `<td>${s.type === 'specialized' ? 'Chuyên' : 'Công lập'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Địa chỉ</strong></td>
+                        ${compareSchools.map(s => `<td>${s.address}, ${s.district}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Chỉ tiêu 2024</strong></td>
+                        ${compareSchools.map(s => `<td><strong>${s.quota}</strong> học sinh</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Số thí sinh đăng ký</strong></td>
+                        ${compareSchools.map(s => `<td>${s.applicants} học sinh</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Tỷ lệ chọi</strong></td>
+                        ${compareSchools.map(s => `<td style="color: ${(s.applicants / s.quota) > 3 ? '#dc2626' : '#16a34a'}; font-weight: 600;">${(s.applicants / s.quota).toFixed(1)}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Điểm chuẩn 2024</strong></td>
+                        ${compareSchools.map(s => `<td style="font-size: 18px; font-weight: 700; color: #2563eb;">${s.cutoff[0]}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Điểm chuẩn 2023</strong></td>
+                        ${compareSchools.map(s => `<td>${s.cutoff[1]}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Điểm chuẩn 2022</strong></td>
+                        ${compareSchools.map(s => `<td>${s.cutoff[2]}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td><strong>Điểm chuẩn TB 3 năm</strong></td>
+                        ${compareSchools.map(s => {
+                            const avg = (s.cutoff.reduce((a, b) => a + b, 0) / s.cutoff.length).toFixed(2);
+                            return `<td><strong>${avg}</strong></td>`;
+                        }).join('')}
+                    </tr>
+                </tbody>
+            `;
+            
+            document.getElementById('compareTable').innerHTML = table;
+        }
+
+        // Save school
+        function saveSchool(schoolId) {
+            if (savedSchools.includes(schoolId)) {
+                savedSchools = savedSchools.filter(id => id !== schoolId);
+                alert('Đã bỏ lưu trường!');
+            } else {
+                savedSchools.push(schoolId);
+                alert('Đã lưu trường vào danh sách!');
+            }
+            renderSchools();
+            updateStats();
+        }
+
+        // Add to compare
+        function addToCompare(schoolId) {
+            if (compareList.includes(schoolId)) {
+                alert('Trường này đã có trong danh sách so sánh!');
+                return;
+            }
+            
+            if (compareList.length >= 3) {
+                alert('Chỉ được chọn tối đa 3 trường để so sánh!');
+                return;
+            }
+            
+            compareList.push(schoolId);
+            alert('Đã thêm vào danh sách so sánh!');
+        }
+
+        // View school detail
+        function viewSchoolDetail(schoolId) {
+            const school = schoolsData.find(s => s.id === schoolId);
+            if (!school) return;
+            
+            alert(`Thông tin chi tiết:\n\n${school.name}\n${school.address}, ${school.district}, ${school.province}\n\nChỉ tiêu: ${school.quota}\nĐiểm chuẩn 2024: ${school.cutoff[0]}`);
+        }
+
+        // Render saved schools
+        function renderSavedSchools() {
+            const savedList = document.getElementById('savedList');
+            
+            if (savedSchools.length === 0) {
+                savedList.innerHTML = `
+                    <p style="text-align: center; color: #6b7280; padding: 40px;">
+                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+                        Bạn chưa lưu trường nào
+                    </p>
+                `;
+                return;
+            }
+            
+            const saved = schoolsData.filter(s => savedSchools.includes(s.id));
+            savedList.innerHTML = saved.map(school => `
+                <div class="school-card" style="margin-bottom: 15px;">
+                    <div class="school-header">
+                        <div>
+                            <div class="school-name">${school.name}</div>
+                            <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">
+                                <i class="fas fa-map-marker-alt"></i> ${school.address}, ${school.district}
+                            </div>
+                        </div>
+                        <span class="school-badge ${school.type === 'specialized' ? 'badge-specialized' : 'badge-public'}">
+                            ${school.type === 'specialized' ? 'Chuyên' : 'Công lập'}
+                        </span>
+                    </div>
+                    <div class="school-actions">
+                        <button class="btn btn-outline" onclick="saveSchool(${school.id})">
+                            <i class="fas fa-trash"></i>
+                            Bỏ lưu
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update stats
+        function updateStats() {
+            const statCards = document.querySelectorAll('.stat-card');
+            if (statCards[3]) {
+                statCards[3].querySelector('h3').textContent = savedSchools.length;
+            }
+        }
+
+        // Initialize
+        setupAuthForms();
+        updateAuthStateUI();
+        renderSchools();
+    </script>
+</body>
+</html>
