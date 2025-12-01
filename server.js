@@ -7,6 +7,7 @@ import v1Routes from "./server/v1/index.js";
 import v2ProvinceRoutes from "./server/v2/routes/provinces.js";
 import v2CommuneRoutes from "./server/v2/routes/communes.js";
 import { loadV2Cache } from "./server/v2/utils/loader.js";
+import bridgeRoutes from "./server/bridge/index.js";
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./server/v1/middleware/errorHandler.js";
 // Load biến môi trường
@@ -37,6 +38,7 @@ app.use("/v1", v1Routes);
 loadV2Cache();
 app.use("/v2/provinces", v2ProvinceRoutes);
 app.use("/v2/communes", v2CommuneRoutes);
+app.use("/bridge", bridgeRoutes);
 // --- XỬ LÝ LỖI CHUNG ---
 // 404 handler must be after all routes
 app.use(notFoundHandler);
